@@ -30,7 +30,7 @@ from PyQt4.QtCore import Qt
 
 from processing.gui.BatchPanel import BatchPanel
 from processing.gui.AlgorithmDialogBase import AlgorithmDialogBase
-from processing.gui.AlgorithmExecutor import runalg
+from processing.gui.AlgorithmExecutor import AlgorithmExecutor
 from processing.gui.Postprocessing import handleAlgorithmResults
 
 from processing.core.ProcessingResults import ProcessingResults

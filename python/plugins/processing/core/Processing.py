@@ -27,7 +27,7 @@ __revision__ = '$Format:%H$'
 
 import sys
 
-from PyQt4.QtCore import Qt, QCoreApplication
+from PyQt4.QtCore import Qt, QCoreApplication, QThread
 from PyQt4.QtGui import QApplication, QCursor
 
 from qgis.utils import iface
@@ -41,7 +41,7 @@ from processing.core.ProcessingLog import ProcessingLog
 from processing.gui.MessageBarProgress import MessageBarProgress
 from processing.gui.RenderingStyles import RenderingStyles
 from processing.gui.Postprocessing import handleAlgorithmResults
-from processing.gui.AlgorithmExecutor import runalg
+from processing.gui.AlgorithmExecutor import AlgorithmExecutor
 from processing.modeler.ModelerAlgorithmProvider import ModelerAlgorithmProvider
 from processing.modeler.ModelerOnlyAlgorithmProvider import ModelerOnlyAlgorithmProvider
 from processing.algs.qgis.QGISAlgorithmProvider import QGISAlgorithmProvider
@@ -55,7 +55,7 @@ from processing.algs.saga.SagaAlgorithmProvider import SagaAlgorithmProvider
 from processing.script.ScriptAlgorithmProvider import ScriptAlgorithmProvider
 from processing.algs.taudem.TauDEMAlgorithmProvider import TauDEMAlgorithmProvider
 from processing.tools import dataobjects
-
+import time
 
 class Processing:
 
@@ -73,6 +73,10 @@ class Processing:
     contextMenuActions = []
 
     modeler = ModelerAlgorithmProvider()
+
+    algExeResult = None
+    notFinished = True
+    algExecutor = None
 
     @staticmethod
     def addProvider(provider, updateList=True):
@@ -348,8 +352,28 @@ class Processing:
         progress = None
         if iface is not None :
             progress = MessageBarProgress()
-        ret = runalg(alg, progress)
-        if onFinish is not None and ret:
+
+        # ----------------------------------
+
+        objThread = QThread()
+        Processing.algExecutor = AlgorithmExecutor(alg, progress)
+        Processing.algExecutor.moveToThread(objThread)
+        Processing.algExecutor.setResult.connect(setAlgExeResult)
+        Processing.algExecutor.finished.connect(objThread.quit)
+        objThread.started.connect(Processing.algExecutor.runalg)
+
+        objThread.start()
+
+        print 'hello!!\n'
+        while(Processing.notFinished):
+            print 'in the while'
+            time.sleep(2)
+            pass
+
+        # ----------------------------------
+
+        #ret = runalg(alg, progress)
+        if onFinish is not None and Processing.algExeResult:
             onFinish(alg, progress)
 
         if iface is not None:
@@ -362,3 +386,9 @@ class Processing:
         if context == '':
             context = 'Processing'
         return QCoreApplication.translate(context, string)
+
+def setAlgExeResult():
+    Processing.algExeResult = Processing.algExecutor.result
+    Processing.algExecutor.finished.emit()
+    Processing.notFinished = False
+    print 'finish'
