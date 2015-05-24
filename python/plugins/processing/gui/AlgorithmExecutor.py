@@ -31,11 +31,13 @@ class AlgorithmExecutor(QObject):
         Return true if everything went OK, false if the algorithm
         could not be completed.
         """
+        print 'The algorithm will start\n'
         if self.progress is None:
             self.progress = SilentProgress()
         try:
+            print 'execute algorithm\n'
             self.alg.execute(self.progress)
-            
+            print 'algorithm executed\n'
             self.setResult.emit()
         except Exception, e:
             ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)

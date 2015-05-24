@@ -74,9 +74,11 @@ class Processing:
 
     modeler = ModelerAlgorithmProvider()
 
+    #
     algExeResult = None
     notFinished = True
     algExecutor = None
+
 
     @staticmethod
     def addProvider(provider, updateList=True):
@@ -279,7 +281,7 @@ class Processing:
             print 'Error: Algorithm not found\n'
             return
         alg = alg.getCopy()
-
+        print alg
         if len(args) == 1 and isinstance(args[0], dict):
             # Set params by name and try to run the alg even if not all parameter values are provided,
             # by using the default values instead.
@@ -355,19 +357,20 @@ class Processing:
 
         # ----------------------------------
 
+        # use signal to connect to the progress bar
+        #runAlgorithmThread(alg, progress)
         objThread = QThread()
         Processing.algExecutor = AlgorithmExecutor(alg, progress)
         Processing.algExecutor.moveToThread(objThread)
         Processing.algExecutor.setResult.connect(setAlgExeResult)
         Processing.algExecutor.finished.connect(objThread.quit)
         objThread.started.connect(Processing.algExecutor.runalg)
-
+        print "starting QTthread"
         objThread.start()
 
-        print 'hello!!\n'
+        # search about thread safe in python (GIL)
         while(Processing.notFinished):
-            print 'in the while'
-            time.sleep(2)
+            print ''
             pass
 
         # ----------------------------------
@@ -379,6 +382,7 @@ class Processing:
         if iface is not None:
           QApplication.restoreOverrideCursor()
           progress.close()
+
         return alg
 
     @staticmethod
@@ -387,8 +391,28 @@ class Processing:
             context = 'Processing'
         return QCoreApplication.translate(context, string)
 
+def runAlgorithmThread(alg, progress):
+    objThread = QThread()
+    algExecutor = AlgorithmExecutor(alg, progress)
+    algExecutor.moveToThread(objThread)
+    algExecutor.setResult.connect(setAlgExeResult)
+    algExecutor.finished.connect(objThread.quit)
+    objThread.started.connect(algExecutor.runalg)
+    print "starting QTthread"
+    objThread.start()
+
+
+def resultHandler():
+    if onFinish is not None and Processing.algExeResult:
+        onFinish(alg, progress)
+
+    if iface is not None:
+      QApplication.restoreOverrideCursor()
+      progress.close()
+    return alg
+
 def setAlgExeResult():
     Processing.algExeResult = Processing.algExecutor.result
     Processing.algExecutor.finished.emit()
     Processing.notFinished = False
-    print 'finish'
+    #print 'finish'
