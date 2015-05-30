@@ -16,6 +16,7 @@
 *                                                                         *
 ***************************************************************************
 """
+from __builtin__ import int
 
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
@@ -30,7 +31,7 @@ import traceback
 import copy
 
 from PyQt4.QtGui import QIcon
-from PyQt4.QtCore import QCoreApplication
+from PyQt4.QtCore import QCoreApplication, pyqtSignal, QObject
 from qgis.core import QGis, QgsRasterFileWriter
 
 from processing.core.ProcessingLog import ProcessingLog
@@ -43,10 +44,13 @@ from processing.tools import dataobjects, vector
 from processing.tools.system import setTempOutput
 
 
-class GeoAlgorithm:
+class GeoAlgorithm(QObject):
 
     _icon = QIcon(os.path.dirname(__file__) + '/../images/alg.png')
-
+    
+    # Set the progress on the progress bar
+    progressSignal = pyqtSignal(int)
+        
     def __init__(self):
         # Parameters needed by the algorithm
         self.parameters = list()
@@ -82,7 +86,7 @@ class GeoAlgorithm:
         # behaviour, in case some operations should be run differently
         # when running as part of a model
         self.model = None
-
+        
         self.defineCharacteristics()
 
     def getCopy(self):
@@ -206,7 +210,7 @@ class GeoAlgorithm:
 
     # =========================================================
 
-    def execute(self, progress=None, model=None):
+    def execute(self, model=None):
         """The method to use to call a processing algorithm.
 
         Although the body of the algorithm is in processAlgorithm(),
@@ -221,11 +225,11 @@ class GeoAlgorithm:
             self.setOutputCRS()
             self.resolveTemporaryOutputs()
             self.checkOutputFileExtensions()
-            self.runPreExecutionScript(progress)
-            self.processAlgorithm(progress)
-            progress.setPercentage(100)
-            self.convertUnsupportedFormats(progress)
-            self.runPostExecutionScript(progress)
+            self.runPreExecutionScript()
+            self.processAlgorithm()
+            self.progressSignal.emit(100)
+            self.convertUnsupportedFormats()
+            self.runPostExecutionScript()
         except GeoAlgorithmExecutionException, gaee:
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, gaee.msg)
             raise gaee
@@ -244,23 +248,23 @@ class GeoAlgorithm:
             raise GeoAlgorithmExecutionException(
                 str(e) + self.tr('\nSee log for more details'))
 
-    def runPostExecutionScript(self, progress):
+    def runPostExecutionScript(self):
         scriptFile = ProcessingConfig.getSetting(
             ProcessingConfig.POST_EXECUTION_SCRIPT)
-        self.runHookScript(scriptFile, progress)
+        self.runHookScript(scriptFile)
 
-    def runPreExecutionScript(self, progress):
+    def runPreExecutionScript(self):
         scriptFile = ProcessingConfig.getSetting(
             ProcessingConfig.PRE_EXECUTION_SCRIPT)
-        self.runHookScript(scriptFile, progress)
+        self.runHookScript(scriptFile)
 
-    def runHookScript(self, filename, progress):
+    def runHookScript(self, filename):
         if filename is None or not os.path.exists(filename):
             return
         try:
             script = 'import processing\n'
             ns = {}
-            ns['progress'] = progress
+            #ns['progress'] = progress
             ns['alg'] = self
             f = open(filename)
             lines = f.readlines()
@@ -272,7 +276,7 @@ class GeoAlgorithm:
             # all exceptions
             pass
 
-    def convertUnsupportedFormats(self, progress):
+    def convertUnsupportedFormats(self):
         i = 0
         progress.setText(self.tr('Converting outputs'))
         for out in self.outputs:
@@ -309,7 +313,7 @@ class GeoAlgorithm:
                     features = vector.features(layer)
                     for feature in features:
                         writer.addRecord(feature)
-            progress.setPercentage(100 * i / float(len(self.outputs)))
+            self.progressSignal.emit(100 * i / float(len(self.outputs)))
 
     def getFormatShortNameFromFilename(self, filename):
         ext = filename[filename.rfind('.') + 1:]

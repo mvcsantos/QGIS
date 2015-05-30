@@ -74,11 +74,11 @@ class Processing:
 
     modeler = ModelerAlgorithmProvider()
 
-    #
+    # Used int the Multithreading 
     algExeResult = None
     notFinished = True
     algExecutor = None
-
+    objThread = None
 
     @staticmethod
     def addProvider(provider, updateList=True):
@@ -280,8 +280,9 @@ class Processing:
         if alg is None:
             print 'Error: Algorithm not found\n'
             return
+        
         alg = alg.getCopy()
-        print alg
+            
         if len(args) == 1 and isinstance(args[0], dict):
             # Set params by name and try to run the alg even if not all parameter values are provided,
             # by using the default values instead.
@@ -356,22 +357,31 @@ class Processing:
             progress = MessageBarProgress()
 
         # ----------------------------------
-
-        # use signal to connect to the progress bar
+        if progress is not None:
+            # In order to show the progress we need to connect the 
+            # ProgressBar slot setPercentage to the algorithm progress signal
+            alg.progressSignal.connect(progress.setPercentage)
+            print "Progress bar is not none"
+        
         #runAlgorithmThread(alg, progress)
         objThread = QThread()
-        Processing.algExecutor = AlgorithmExecutor(alg, progress)
+        
+        Processing.algExecutor = AlgorithmExecutor(alg)
         Processing.algExecutor.moveToThread(objThread)
         Processing.algExecutor.setResult.connect(setAlgExeResult)
         Processing.algExecutor.finished.connect(objThread.quit)
+        Processing.algExecutor.debugSignal.connect(debug)
+        
         objThread.started.connect(Processing.algExecutor.runalg)
+        
         print "starting QTthread"
         objThread.start()
-
+        
+        i = 0
         # search about thread safe in python (GIL)
         while(Processing.notFinished):
-            print ''
-            pass
+            print i
+            i+=1
 
         # ----------------------------------
 
@@ -387,19 +397,21 @@ class Processing:
 
     @staticmethod
     def tr(string, context=''):
+        
         if context == '':
             context = 'Processing'
         return QCoreApplication.translate(context, string)
 
 def runAlgorithmThread(alg, progress):
-    objThread = QThread()
-    algExecutor = AlgorithmExecutor(alg, progress)
-    algExecutor.moveToThread(objThread)
-    algExecutor.setResult.connect(setAlgExeResult)
-    algExecutor.finished.connect(objThread.quit)
-    objThread.started.connect(algExecutor.runalg)
+    alg = alg.getCopy()
+    Processing.objThread = QThread()
+    Processing.algExecutor = AlgorithmExecutor(alg, progress)
+    Processing.algExecutor.moveToThread(Processing.objThread)
+    Processing.algExecutor.setResult.connect(setAlgExeResult)
+    Processing.algExecutor.finished.connect(Processing.objThread.quit)
+    Processing.objThread.started.connect(Processing.algExecutor.runalg)
     print "starting QTthread"
-    objThread.start()
+    Processing.objThread.start()
 
 
 def resultHandler():
@@ -416,3 +428,6 @@ def setAlgExeResult():
     Processing.algExecutor.finished.emit()
     Processing.notFinished = False
     #print 'finish'
+
+def debug(e):
+    print "Error: ",e

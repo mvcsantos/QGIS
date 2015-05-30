@@ -7,6 +7,7 @@ from processing.tools import dataobjects
 from processing.tools.system import getTempFilename
 from processing.tools import vector
 from processing.gui.SilentProgress import SilentProgress
+from __builtin__ import str
 
 # processing.runalg('qgis:creategrid', 0, "0,1,0,1", 0.1, 0.1, "EPSG:4326", None)
 
@@ -17,11 +18,11 @@ class AlgorithmExecutor(QObject):
     #stop = QtCore.pyqtSignal()
     setResult= pyqtSignal()
     finished = pyqtSignal()
+    debugSignal = pyqtSignal(str)
 
-    def __init__(self, alg, progress = None, parent = None):
+    def __init__(self, alg, parent = None):
         QObject.__init__(self, parent)
-        self.alg = alg
-        self.progress = progress
+        self.alg = alg.getCopy()
         self.result = True
 
     def runalg(self):
@@ -32,19 +33,19 @@ class AlgorithmExecutor(QObject):
         could not be completed.
         """
         print 'The algorithm will start\n'
-        if self.progress is None:
-            self.progress = SilentProgress()
+        #if self.progress is None:
+        #    self.progress = SilentProgress()
         try:
             print 'execute algorithm\n'
-            self.alg.execute(self.progress)
+            self.alg.execute()
             print 'algorithm executed\n'
             self.setResult.emit()
         except Exception, e:
             ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
-            self.progress.error(e.msg)
-            self.setResult.emit()
-            print e
+            
             self.result = False
+            self.debugSignal.emit(e)
+            self.setResult.emit()
 
     def runalgIterating():
         pass
