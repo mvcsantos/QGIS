@@ -27,7 +27,7 @@ __revision__ = '$Format:%H$'
 
 import sys
 
-from PyQt4.QtCore import Qt, QCoreApplication
+from PyQt4.QtCore import Qt, QCoreApplication, QThread, QObject, pyqtSlot
 from PyQt4.QtGui import QApplication, QCursor
 
 from qgis.utils import iface
@@ -41,7 +41,7 @@ from processing.core.ProcessingLog import ProcessingLog
 from processing.gui.MessageBarProgress import MessageBarProgress
 from processing.gui.RenderingStyles import RenderingStyles
 from processing.gui.Postprocessing import handleAlgorithmResults
-from processing.gui.AlgorithmExecutor import runalg
+from processing.gui.AlgorithmExecutor import AlgorithmExecutor
 from processing.modeler.ModelerAlgorithmProvider import ModelerAlgorithmProvider
 from processing.modeler.ModelerOnlyAlgorithmProvider import ModelerOnlyAlgorithmProvider
 from processing.algs.qgis.QGISAlgorithmProvider import QGISAlgorithmProvider
@@ -52,12 +52,13 @@ from processing.algs.gdal.GdalOgrAlgorithmProvider import GdalOgrAlgorithmProvid
 from processing.algs.otb.OTBAlgorithmProvider import OTBAlgorithmProvider
 from processing.algs.r.RAlgorithmProvider import RAlgorithmProvider
 from processing.algs.saga.SagaAlgorithmProvider import SagaAlgorithmProvider
+from processing.algs.qgis.Grid import Grid
 from processing.script.ScriptAlgorithmProvider import ScriptAlgorithmProvider
 from processing.algs.taudem.TauDEMAlgorithmProvider import TauDEMAlgorithmProvider
 from processing.tools import dataobjects
+import time
 
-
-class Processing:
+class Processing(QObject):
 
     listeners = []
     providers = []
@@ -73,6 +74,13 @@ class Processing:
     contextMenuActions = []
 
     modeler = ModelerAlgorithmProvider()
+
+    algExeResult = None
+    notFinished = True
+    algExecutor = None
+    
+    def __init__(self):
+        QObject.__init__(self, None)
 
     @staticmethod
     def addProvider(provider, updateList=True):
@@ -274,7 +282,9 @@ class Processing:
         if alg is None:
             print 'Error: Algorithm not found\n'
             return
-        alg = alg.getCopy()
+        
+        #alg = alg.getCopy()
+        alg = newGridInstance(alg)
 
         if len(args) == 1 and isinstance(args[0], dict):
             # Set params by name and try to run the alg even if not all parameter values are provided,
@@ -347,9 +357,37 @@ class Processing:
 
         progress = None
         if iface is not None :
+<<<<<<< HEAD
             progress = MessageBarProgress(alg.name)
         ret = runalg(alg, progress)
         if onFinish is not None and ret:
+=======
+            progress = MessageBarProgress()
+
+        # ----------------------------------
+        
+        alg.progress.connect(showProgress)
+
+        objThread = QThread()
+        Processing.algExecutor = AlgorithmExecutor(alg, progress)
+        Processing.algExecutor.moveToThread(objThread)
+        objThread.started.connect(Processing.algExecutor.runalg)
+        Processing.algExecutor.setResult.connect(setAlgExeResult)
+        Processing.algExecutor.finished.connect(objThread.quit)
+        
+
+        objThread.start()
+
+        while(Processing.notFinished):
+            print 'in the while'
+            time.sleep(2)
+            pass
+
+        # ----------------------------------
+
+        #ret = runalg(alg, progress)
+        if onFinish is not None and Processing.algExeResult:
+>>>>>>> ExperimentalSignals
             onFinish(alg, progress)
 
         if iface is not None:
@@ -362,3 +400,26 @@ class Processing:
         if context == '':
             context = 'Processing'
         return QCoreApplication.translate(context, string)
+
+# TODO: Search for Queued signal in order to call this function in the correct order
+@pyqtSlot()
+def showProgress(p):
+    print "Progress (",time.clock(),"): ",p
+    
+def newGridInstance(alg):
+    
+    newGeoAlg = GeoAlgorithm()
+    print newGeoAlg.progress
+    newAlg = Grid()   
+    newAlg.provider = alg.provider
+    newAlg.crs = alg.crs
+    newAlg.parameters = alg.parameters
+    newAlg.outputs = alg.outputs
+    
+    return newAlg
+
+def setAlgExeResult():
+    Processing.algExeResult = Processing.algExecutor.result
+    Processing.algExecutor.finished.emit()
+    Processing.notFinished = False
+    print 'finish'

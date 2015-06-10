@@ -30,7 +30,7 @@ import traceback
 import copy
 
 from PyQt4.QtGui import QIcon
-from PyQt4.QtCore import QCoreApplication
+from PyQt4.QtCore import QCoreApplication, QObject, pyqtSignal
 from qgis.core import QGis, QgsRasterFileWriter
 
 from processing.core.ProcessingLog import ProcessingLog
@@ -43,11 +43,16 @@ from processing.tools import dataobjects, vector
 from processing.tools.system import setTempOutput
 
 
-class GeoAlgorithm:
+class GeoAlgorithm(QObject):
 
     _icon = QIcon(os.path.dirname(__file__) + '/../images/alg.png')
+    
+    progress = pyqtSignal(int)
 
     def __init__(self):
+        # Call QObject init method
+        QObject.__init__(self, None)
+        
         # Parameters needed by the algorithm
         self.parameters = list()
 
@@ -84,6 +89,9 @@ class GeoAlgorithm:
         self.model = None
 
         self.defineCharacteristics()
+
+        print "GeoAlgorithm: ", self.progress        
+        #self.progress = pyqtSlot(int)
 
     def getCopy(self):
         """Returns a new instance of this algorithm, ready to be used
@@ -221,9 +229,10 @@ class GeoAlgorithm:
             self.setOutputCRS()
             self.resolveTemporaryOutputs()
             self.checkOutputFileExtensions()
+            # TODO: remove progress from this method
             self.runPreExecutionScript(progress)
             self.processAlgorithm(progress)
-            progress.setPercentage(100)
+            self.progress.emit(100)
             self.convertUnsupportedFormats(progress)
             self.runPostExecutionScript(progress)
         except GeoAlgorithmExecutionException, gaee:
@@ -309,7 +318,7 @@ class GeoAlgorithm:
                     features = vector.features(layer)
                     for feature in features:
                         writer.addRecord(feature)
-            progress.setPercentage(100 * i / float(len(self.outputs)))
+            self.progress.emit(100 * i / float(len(self.outputs)))
 
     def getFormatShortNameFromFilename(self, filename):
         ext = filename[filename.rfind('.') + 1:]

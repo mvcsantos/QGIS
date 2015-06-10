@@ -52,6 +52,7 @@ class Grid(GeoAlgorithm):
              'Hexagon (polygon)'
              ]
 
+
     def defineCharacteristics(self):
         self.name = 'Create grid'
         self.group = 'Vector creation tools'
