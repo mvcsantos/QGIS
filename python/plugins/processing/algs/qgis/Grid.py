@@ -52,9 +52,6 @@ class Grid(GeoAlgorithm):
              'Hexagon (polygon)'
              ]
 
-    def __init__(self):
-        print "Grid constructor"
-        GeoAlgorithm.__init__(self)
 
     def defineCharacteristics(self):
         self.name = 'Create grid'

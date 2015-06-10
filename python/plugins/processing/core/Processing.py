@@ -27,7 +27,7 @@ __revision__ = '$Format:%H$'
 
 import sys
 
-from PyQt4.QtCore import Qt, QCoreApplication, QThread, QObject
+from PyQt4.QtCore import Qt, QCoreApplication, QThread, QObject, pyqtSlot
 from PyQt4.QtGui import QApplication, QCursor
 
 from qgis.utils import iface
@@ -80,7 +80,7 @@ class Processing(QObject):
     algExecutor = None
     
     def __init__(self):
-        QObject.__init__(self)
+        QObject.__init__(self, None)
 
     @staticmethod
     def addProvider(provider, updateList=True):
@@ -395,11 +395,15 @@ class Processing(QObject):
             context = 'Processing'
         return QCoreApplication.translate(context, string)
 
-
+# TODO: Search for Queued signal in order to call this function in the correct order
+@pyqtSlot()
 def showProgress(p):
-    print "Progress: ",p
+    print "Progress (",time.clock(),"): ",p
     
 def newGridInstance(alg):
+    
+    newGeoAlg = GeoAlgorithm()
+    print newGeoAlg.progress
     newAlg = Grid()   
     newAlg.provider = alg.provider
     newAlg.crs = alg.crs

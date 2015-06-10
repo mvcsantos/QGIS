@@ -30,7 +30,7 @@ import traceback
 import copy
 
 from PyQt4.QtGui import QIcon
-from PyQt4.QtCore import QCoreApplication, QObject, pyqtSlot
+from PyQt4.QtCore import QCoreApplication, QObject, pyqtSignal
 from qgis.core import QGis, QgsRasterFileWriter
 
 from processing.core.ProcessingLog import ProcessingLog
@@ -47,7 +47,7 @@ class GeoAlgorithm(QObject):
 
     _icon = QIcon(os.path.dirname(__file__) + '/../images/alg.png')
     
-    progress = pyqtSlot(int)
+    progress = pyqtSignal(int)
 
     def __init__(self):
         # Call QObject init method
