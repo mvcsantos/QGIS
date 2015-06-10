@@ -357,11 +357,6 @@ class Processing(QObject):
 
         progress = None
         if iface is not None :
-<<<<<<< HEAD
-            progress = MessageBarProgress(alg.name)
-        ret = runalg(alg, progress)
-        if onFinish is not None and ret:
-=======
             progress = MessageBarProgress()
 
         # ----------------------------------
@@ -387,7 +382,6 @@ class Processing(QObject):
 
         #ret = runalg(alg, progress)
         if onFinish is not None and Processing.algExeResult:
->>>>>>> ExperimentalSignals
             onFinish(alg, progress)
 
         if iface is not None:
