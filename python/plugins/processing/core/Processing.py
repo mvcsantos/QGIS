@@ -401,9 +401,6 @@ def showProgress(p):
     print "Progress (",time.clock(),"): ",p
     
 def newGridInstance(alg):
-    
-    newGeoAlg = GeoAlgorithm()
-    print newGeoAlg.progress
     newAlg = Grid()   
     newAlg.provider = alg.provider
     newAlg.crs = alg.crs
