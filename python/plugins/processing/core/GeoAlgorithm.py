@@ -90,9 +90,6 @@ class GeoAlgorithm(QObject):
 
         self.defineCharacteristics()
 
-        print "GeoAlgorithm: ", self.progress        
-        #self.progress = pyqtSlot(int)
-
     def getCopy(self):
         """Returns a new instance of this algorithm, ready to be used
         for being executed.

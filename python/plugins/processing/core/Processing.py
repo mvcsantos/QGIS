@@ -377,7 +377,8 @@ class Processing(QObject):
             print 'in the while'
             time.sleep(2)
             pass
-
+        
+        Processing.notFinished=True
         # ----------------------------------
 
         #ret = runalg(alg, progress)
