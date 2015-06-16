@@ -31,8 +31,6 @@ class AlgorithmExecutor(QObject):
         Return true if everything went OK, false if the algorithm
         could not be completed.
         """
-        if self.progress is None:
-            self.progress = SilentProgress()
         try:
             self.alg.execute(self.progress)
             

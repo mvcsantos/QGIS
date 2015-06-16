@@ -361,8 +361,11 @@ class Processing(QObject):
 
         # ----------------------------------
         
+        if progress is None:
+            progress = SilentProgress()
+        alg.progress.connect(progress.setPercentage)
         alg.progress.connect(showProgress)
-
+        
         objThread = QThread()
         Processing.algExecutor = AlgorithmExecutor(alg, progress)
         Processing.algExecutor.moveToThread(objThread)
