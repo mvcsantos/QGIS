@@ -70,7 +70,7 @@ class AlgorithmDialog(AlgorithmDialogBase):
     def __init__(self, alg):
         AlgorithmDialogBase.__init__(self, alg)
 
-        self.alg = self.newGeoAlgInstance(alg)
+        self.alg = alg.getCopy()
 
         self.mainWidget = ParametersPanel(self, alg)
         self.setMainWidget()
@@ -208,6 +208,7 @@ class AlgorithmDialog(AlgorithmDialogBase):
                  # ----------------------------------
             
                 self.alg.progress.connect(self.setPercentage)
+                self.alg.setText.connect(self.setText)
                 
                 objThread = QThread()
                 AlgorithmDialog.algExecutor = AlgorithmExecutor(self.alg, self)
