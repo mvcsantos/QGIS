@@ -283,8 +283,7 @@ class Processing(QObject):
             print 'Error: Algorithm not found\n'
             return
         
-        #alg = alg.getCopy()
-        alg = newGridInstance(alg)
+        alg = alg.getCopy()
 
         if len(args) == 1 and isinstance(args[0], dict):
             # Set params by name and try to run the alg even if not all parameter values are provided,
@@ -363,8 +362,10 @@ class Processing(QObject):
         
         if progress is None:
             progress = SilentProgress()
+            
         alg.progress.connect(progress.setPercentage)
         alg.progress.connect(showProgress)
+        alg.setText.connect(progress.setText)
         
         objThread = QThread()
         Processing.algExecutor = AlgorithmExecutor(alg, progress)
@@ -373,9 +374,11 @@ class Processing(QObject):
         Processing.algExecutor.setResult.connect(setAlgExeResult)
         Processing.algExecutor.finished.connect(objThread.quit)
         
-
-        objThread.start()
-
+        try:
+            objThread.start()
+        except Exception, e:
+            ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
+            
         while(Processing.notFinished):
             print 'in the while'
             time.sleep(2)

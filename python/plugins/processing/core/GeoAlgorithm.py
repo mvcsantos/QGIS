@@ -16,6 +16,7 @@
 *                                                                         *
 ***************************************************************************
 """
+from __builtin__ import str
 
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
@@ -48,6 +49,7 @@ class GeoAlgorithm(QObject):
     _icon = QIcon(os.path.dirname(__file__) + '/../images/alg.png')
     
     progress = pyqtSignal(int)
+    setText = pyqtSignal(str)
 
     def __init__(self):
         # Call QObject init method
@@ -94,9 +96,14 @@ class GeoAlgorithm(QObject):
         """Returns a new instance of this algorithm, ready to be used
         for being executed.
         """
-        newone = copy.copy(self)
+        #newone = copy.copy(self)
+        newone = GeoAlgorithm()
+        #newone.parameters = copy.deepcopy(self.parameters)
+        #newone.outputs = copy.deepcopy(self.outputs)
+        newone.__dict__ = self.__dict__
         newone.parameters = copy.deepcopy(self.parameters)
         newone.outputs = copy.deepcopy(self.outputs)
+        #newone._icon = copy.deepcopy()
         return newone
 
     # methods to overwrite when creating a custom geoalgorithm
@@ -145,7 +152,7 @@ class GeoAlgorithm(QObject):
         return False, helpUrl
 
 
-    def processAlgorithm(self):
+    def processAlgorithm(self, progress):
         """Here goes the algorithm itself.
 
         There is no return value from this method.
@@ -280,7 +287,8 @@ class GeoAlgorithm(QObject):
 
     def convertUnsupportedFormats(self, progress):
         i = 0
-        progress.setText(self.tr('Converting outputs'))
+        #progress.setText(self.tr('Converting outputs'))
+        self.setText.emit('Converting outputs')
         for out in self.outputs:
             if isinstance(out, OutputVector):
                 if out.compatible is not None:

@@ -37,7 +37,6 @@ class AlgorithmExecutor(QObject):
             self.setResult.emit()
         except Exception, e:
             ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
-            self.progress.error(e.msg)
             self.setResult.emit()
             print e
             self.result = False
