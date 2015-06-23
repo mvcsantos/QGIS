@@ -369,10 +369,10 @@ class Processing(QObject):
         
         objThread = QThread()
         Processing.algExecutor = AlgorithmExecutor(alg, progress)
-        Processing.algExecutor.moveToThread(objThread)
         objThread.started.connect(Processing.algExecutor.runalg)
         Processing.algExecutor.setResult.connect(setAlgExeResult)
         Processing.algExecutor.finished.connect(objThread.quit)
+        Processing.algExecutor.moveToThread(objThread)
         
         try:
             objThread.start()

@@ -70,7 +70,7 @@ class AlgorithmDialog(AlgorithmDialogBase):
     def __init__(self, alg):
         AlgorithmDialogBase.__init__(self, alg)
 
-        self.alg = alg.getCopy()
+        self.alg = alg
 
         self.mainWidget = ParametersPanel(self, alg)
         self.setMainWidget()

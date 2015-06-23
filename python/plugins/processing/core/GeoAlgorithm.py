@@ -96,14 +96,11 @@ class GeoAlgorithm(QObject):
         """Returns a new instance of this algorithm, ready to be used
         for being executed.
         """
-        #newone = copy.copy(self)
         newone = GeoAlgorithm()
-        #newone.parameters = copy.deepcopy(self.parameters)
-        #newone.outputs = copy.deepcopy(self.outputs)
+        newone.__class__ = self.__class__
         newone.__dict__ = self.__dict__
         newone.parameters = copy.deepcopy(self.parameters)
         newone.outputs = copy.deepcopy(self.outputs)
-        #newone._icon = copy.deepcopy()
         return newone
 
     # methods to overwrite when creating a custom geoalgorithm
@@ -287,8 +284,8 @@ class GeoAlgorithm(QObject):
 
     def convertUnsupportedFormats(self, progress):
         i = 0
-        #progress.setText(self.tr('Converting outputs'))
-        self.setText.emit('Converting outputs')
+        #progress.setText()
+        self.setText.emit(self.tr('Converting outputs'))
         for out in self.outputs:
             if isinstance(out, OutputVector):
                 if out.compatible is not None:
