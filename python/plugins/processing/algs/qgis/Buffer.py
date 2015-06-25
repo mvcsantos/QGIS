@@ -27,60 +27,72 @@ __revision__ = '$Format:%H$'
 
 from qgis.core import QgsFeature, QgsGeometry
 from processing.tools import vector
+from PyQt4 import QtCore
 
 
-def buffering(writer, distance, field, useField, layer, dissolve, segments):
-
-    if useField:
-        field = layer.fieldNameIndex(field)
-
-    outFeat = QgsFeature()
-    inFeat = QgsFeature()
-    inGeom = QgsGeometry()
-    outGeom = QgsGeometry()
-
-    current = 0
-    features = vector.features(layer)
-    total = 100.0 / float(len(features))
-
-    # With dissolve
-    if dissolve:
-        first = True
-        for inFeat in features:
-            attrs = inFeat.attributes()
-            if useField:
-                value = attrs[field]
-            else:
-                value = distance
-
-            inGeom = QgsGeometry(inFeat.geometry())
-            outGeom = inGeom.buffer(float(value), segments)
-            if first:
-                tempGeom = QgsGeometry(outGeom)
-                first = False
-            else:
-                tempGeom = tempGeom.combine(outGeom)
-
-            current += 1
-            self.progress.emit(int(current * total))
-
-        outFeat.setGeometry(tempGeom)
-        outFeat.setAttributes(attrs)
-        writer.addFeature(outFeat)
-    else:
-        # Without dissolve
-        for inFeat in features:
-            attrs = inFeat.attributes()
-            if useField:
-                value = attrs[field]
-            else:
-                value = distance
-            inGeom = QgsGeometry(inFeat.geometry())
-            outGeom = inGeom.buffer(float(value), segments)
-            outFeat.setGeometry(outGeom)
+class Buffer(QtCore.QObject):
+    
+    def __init__(self, parent=None):
+        QtCore.QObject.__init__(self, parent)
+    
+    def buffering(writer, distance, field, useField, layer, dissolve, segments):
+    
+        if useField:
+            field = layer.fieldNameIndex(field)
+    
+        outFeat = QgsFeature()
+        inFeat = QgsFeature()
+        inGeom = QgsGeometry()
+        outGeom = QgsGeometry()
+    
+        current = 0
+        features = vector.features(layer)
+        total = 100.0 / float(len(features))
+    
+        # With dissolve
+        if dissolve:
+            first = True
+            for inFeat in features:
+                attrs = inFeat.attributes()
+                if useField:
+                    value = attrs[field]
+                else:
+                    value = distance
+    
+                inGeom = QgsGeometry(inFeat.geometry())
+                outGeom = inGeom.buffer(float(value), segments)
+                if first:
+                    tempGeom = QgsGeometry(outGeom)
+                    first = False
+                else:
+                    tempGeom = tempGeom.combine(outGeom)
+    
+                current += 1
+                try:
+                    self.parent().progress.emit(int(current * total))
+                except Exception,e:
+                    ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
+    
+            outFeat.setGeometry(tempGeom)
             outFeat.setAttributes(attrs)
             writer.addFeature(outFeat)
-            current += 1
-            self.progress.emit(int(current * total))
-
-    del writer
+        else:
+            # Without dissolve
+            for inFeat in features:
+                attrs = inFeat.attributes()
+                if useField:
+                    value = attrs[field]
+                else:
+                    value = distance
+                inGeom = QgsGeometry(inFeat.geometry())
+                outGeom = inGeom.buffer(float(value), segments)
+                outFeat.setGeometry(outGeom)
+                outFeat.setAttributes(attrs)
+                writer.addFeature(outFeat)
+                current += 1
+                try:
+                    self.parent().progress.emit(int(current * total))
+                except Exception,e:
+                    ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
+    
+        del writer
