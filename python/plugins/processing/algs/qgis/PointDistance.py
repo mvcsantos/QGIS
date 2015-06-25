@@ -71,7 +71,7 @@ class PointDistance(GeoAlgorithm):
 
         self.addOutput(OutputTable(self.DISTANCE_MATRIX, self.tr('Distance matrix')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         inLayer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT_LAYER))
         inField = self.getParameterValue(self.INPUT_FIELD)
@@ -91,18 +91,18 @@ class PointDistance(GeoAlgorithm):
         if matType == 0:
             # Linear distance matrix
             self.linearMatrix(inLayer, inField, targetLayer, targetField,
-                matType, nPoints, progress)
+                matType, nPoints)
         elif matType == 1:
            # Standard distance matrix
             self.regularMatrix(inLayer, inField, targetLayer, targetField,
-                nPoints, progress)
+                nPoints)
         elif matType == 2:
             # Summary distance matrix
             self.linearMatrix(inLayer, inField, targetLayer, targetField,
-                matType, nPoints, progress)
+                matType, nPoints)
 
     def linearMatrix(self, inLayer, inField, targetLayer, targetField,
-                     matType, nPoints, progress):
+                     matType, nPoints):
         if matType == 0:
             self.writer.addRecord(['InputID', 'TargetID', 'Distance'])
         else:
@@ -149,10 +149,10 @@ class PointDistance(GeoAlgorithm):
                                       unicode(max(distList))])
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
     def regularMatrix(self, inLayer, inField, targetLayer, targetField,
-                      nPoints, progress):
+                      nPoints):
         index = vector.spatialindex(targetLayer)
 
         inIdx = inLayer.fieldNameIndex(inField)
@@ -189,4 +189,4 @@ class PointDistance(GeoAlgorithm):
             self.writer.addRecord(data)
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))

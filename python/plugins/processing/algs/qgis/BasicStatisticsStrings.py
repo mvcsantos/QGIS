@@ -71,7 +71,7 @@ class BasicStatisticsStrings(GeoAlgorithm):
         self.addOutput(OutputNumber(self.FILLED, self.tr('Number of non-empty values')))
         self.addOutput(OutputNumber(self.UNIQUE, self.tr('Number of unique values')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT_LAYER))
         fieldName = self.getParameterValue(self.FIELD_NAME)
@@ -116,7 +116,7 @@ class BasicStatisticsStrings(GeoAlgorithm):
             sumValue += length
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         n = float(len(values))
         if n > 0:

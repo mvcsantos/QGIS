@@ -52,7 +52,7 @@ class PointsFromPolygons(GeoAlgorithm):
             self.tr('Vector layer'), [ParameterVector.VECTOR_TYPE_POLYGON]))
         self.addOutput(OutputVector(self.OUTPUT_LAYER, self.tr('Points from polygons')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT_VECTOR))
 
         rasterPath = unicode(self.getParameterValue(self.INPUT_RASTER))
@@ -113,6 +113,6 @@ class PointsFromPolygons(GeoAlgorithm):
             polyId += 1
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer

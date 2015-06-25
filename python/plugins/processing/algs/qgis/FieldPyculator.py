@@ -73,7 +73,7 @@ class FieldsPyculator(GeoAlgorithm):
             self.tr('Formula'), 'value = ', multiline=True))
         self.addOutput(OutputVector(self.OUTPUT_LAYER, self.tr('Calculated')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         fieldName = self.getParameterValue(self.FIELD_NAME)
         fieldType = self.getParameterValue(self.FIELD_TYPE)
         fieldLength = self.getParameterValue(self.FIELD_LENGTH)
@@ -130,7 +130,7 @@ class FieldsPyculator(GeoAlgorithm):
         nFeatures = len(features)
         nElement = 1
         for feat in features:
-            progress.setPercentage(int(100 * nElement / nFeatures))
+            self.progress.emit(int(100 * nElement / nFeatures))
             attrs = feat.attributes()
             feat_id = feat.id()
 

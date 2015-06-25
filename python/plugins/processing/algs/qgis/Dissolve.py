@@ -47,7 +47,7 @@ class Dissolve(GeoAlgorithm):
     #   return QtGui.QIcon(os.path.dirname(__file__) + "/icons/dissolve.png")
     #==========================================================================
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         useField = not self.getParameterValue(Dissolve.DISSOLVE_ALL)
         fieldname = self.getParameterValue(Dissolve.FIELD)
         vlayerA = dataobjects.getObjectFromUri(
@@ -67,7 +67,7 @@ class Dissolve(GeoAlgorithm):
             features = vector.features(vlayerA)
             for inFeat in features:
                 nElement += 1
-                progress.setPercentage(int(nElement / nFeat * 100))
+                self.progress.emit(int(nElement / nFeat * 100))
                 if first:
                     attrs = inFeat.attributes()
                     tmpInGeom = QgsGeometry(inFeat.geometry())
@@ -93,7 +93,7 @@ class Dissolve(GeoAlgorithm):
                 features = vector.features(vlayerA)
                 for inFeat in features:
                     nElement += 1
-                    progress.setPercentage(int(nElement / nFeat * 100))
+                    self.progress.emit(int(nElement / nFeat * 100))
                     atMap = inFeat.attributes()
                     tempItem = atMap[field]
                     if unicode(tempItem).strip() == unicode(item).strip():

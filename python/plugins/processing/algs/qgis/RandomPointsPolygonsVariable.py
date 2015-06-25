@@ -66,7 +66,7 @@ class RandomPointsPolygonsVariable(GeoAlgorithm):
             self.tr('Minimum distance'), 0.0, 9999999, 0.0))
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Random points')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.VECTOR))
         fieldName = self.getParameterValue(self.FIELD)
@@ -119,7 +119,7 @@ class RandomPointsPolygonsVariable(GeoAlgorithm):
                     index.insertFeature(f)
                     points[nPoints] = pnt
                     nPoints += 1
-                    progress.setPercentage(int(nPoints * total))
+                    self.progress.emit(int(nPoints * total))
                 nIterations += 1
 
             if nPoints < pointCount:
@@ -127,6 +127,6 @@ class RandomPointsPolygonsVariable(GeoAlgorithm):
                      self.tr('Can not generate requested number of random '
                              'points. Maximum number of attempts exceeded.'))
 
-            progress.setPercentage(0)
+            self.progress.emit(0)
 
         del writer

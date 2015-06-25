@@ -52,7 +52,7 @@ class ImportIntoPostGIS(GeoAlgorithm):
     DROP_STRING_LENGTH = 'DROP_STRING_LENGTH'
     PRIMARY_KEY = 'PRIMARY_KEY'
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         connection = self.DB_CONNECTIONS[self.getParameterValue(self.DATABASE)]
         schema = self.getParameterValue(self.SCHEMA)
         overwrite = self.getParameterValue(self.OVERWRITE)

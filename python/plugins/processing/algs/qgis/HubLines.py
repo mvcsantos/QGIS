@@ -56,7 +56,7 @@ class HubLines(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Hub lines')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layerHub = dataobjects.getObjectFromUri(
             self.getParameterValue(self.HUBS))
         layerSpoke = dataobjects.getObjectFromUri(
@@ -99,6 +99,6 @@ class HubLines(GeoAlgorithm):
 
                     break
 
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))
 
         del writer

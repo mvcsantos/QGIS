@@ -73,7 +73,7 @@ class ZonalStatistics(GeoAlgorithm):
             self.tr('Load whole raster in memory')))
         self.addOutput(OutputVector(self.OUTPUT_LAYER, self.tr('Zonal statistics')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         """ Based on code by Matthew Perry
             https://gist.github.com/perrygeo/5667173
         """
@@ -246,7 +246,7 @@ class ZonalStatistics(GeoAlgorithm):
             rasterizedDS = None
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         rasterDS = None
 

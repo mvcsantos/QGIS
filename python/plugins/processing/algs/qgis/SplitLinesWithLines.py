@@ -51,7 +51,7 @@ class SplitLinesWithLines(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Splitted')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layerA = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT_A))
         layerB = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT_B))
 
@@ -133,6 +133,6 @@ class SplitLinesWithLines(GeoAlgorithm):
                 writer.addFeature(outFeat)
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer

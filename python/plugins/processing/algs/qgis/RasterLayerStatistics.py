@@ -48,11 +48,11 @@ class RasterLayerStatistics(GeoAlgorithm):
     STD_DEV = 'STD_DEV'
     OUTPUT_HTML_FILE = 'OUTPUT_HTML_FILE'
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         outputFile = self.getOutputValue(self.OUTPUT_HTML_FILE)
         uri = self.getParameterValue(self.INPUT)
         layer = dataobjects.getObjectFromUri(uri)
-        values = raster.scanraster(layer, progress)
+        values = raster.scanraster(layer)
 
         n = 0
         nodata = 0

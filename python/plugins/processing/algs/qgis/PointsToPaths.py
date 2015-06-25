@@ -67,7 +67,7 @@ class PointsToPaths(GeoAlgorithm):
         self.addOutput(OutputVector(self.OUTPUT_LINES, self.tr('Paths')))
         self.addOutput(OutputDirectory(self.OUTPUT_TEXT, self.tr('Directory')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.VECTOR))
         groupField = self.getParameterValue(self.GROUP_FIELD)
@@ -97,9 +97,9 @@ class PointsToPaths(GeoAlgorithm):
             else:
                 points[group] = [(order, point)]
 
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))
 
-        progress.setPercentage(0)
+        self.progress.emit(0)
 
         da = QgsDistanceArea()
 
@@ -140,7 +140,7 @@ class PointsToPaths(GeoAlgorithm):
             f.setGeometry(QgsGeometry.fromPolyline(line))
             writer.addFeature(f)
             count += 1
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))
 
         del writer
         fl.close()

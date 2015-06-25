@@ -48,7 +48,7 @@ class DeleteColumn(GeoAlgorithm):
             self.tr('Field to delete'), self.INPUT))
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Deleted column')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT))
         idx = layer.fieldNameIndex(self.getParameterValue(self.COLUMN))
@@ -71,6 +71,6 @@ class DeleteColumn(GeoAlgorithm):
             feat.setAttributes(attributes)
             writer.addFeature(feat)
 
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))
 
         del writer

@@ -29,8 +29,7 @@ from qgis.core import QgsFeature, QgsGeometry
 from processing.tools import vector
 
 
-def buffering(progress, writer, distance, field, useField, layer, dissolve,
-              segments):
+def buffering(writer, distance, field, useField, layer, dissolve, segments):
 
     if useField:
         field = layer.fieldNameIndex(field)
@@ -63,7 +62,7 @@ def buffering(progress, writer, distance, field, useField, layer, dissolve,
                 tempGeom = tempGeom.combine(outGeom)
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         outFeat.setGeometry(tempGeom)
         outFeat.setAttributes(attrs)
@@ -82,6 +81,6 @@ def buffering(progress, writer, distance, field, useField, layer, dissolve,
             outFeat.setAttributes(attrs)
             writer.addFeature(outFeat)
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
     del writer

@@ -40,7 +40,7 @@ class Union(GeoAlgorithm):
     INPUT2 = 'INPUT2'
     OUTPUT = 'OUTPUT'
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         vlayerA = dataobjects.getObjectFromUri(self.getParameterValue(Union.INPUT))
         vlayerB = dataobjects.getObjectFromUri(self.getParameterValue(Union.INPUT2))
         GEOS_EXCEPT = True
@@ -63,7 +63,7 @@ class Union(GeoAlgorithm):
         featuresA = vector.features(vlayerA)
         nFeat = len(featuresA)
         for inFeatA in featuresA:
-            progress.setPercentage(nElement / float(nFeat) * 50)
+            self.progress.emit(nElement / float(nFeat) * 50)
             nElement += 1
             lstIntersectingB = []
             geom = QgsGeometry(inFeatA.geometry())
@@ -141,7 +141,7 @@ class Union(GeoAlgorithm):
         featuresA = vector.features(vlayerB)
         nFeat = len(featuresA)
         for inFeatA in featuresA:
-            progress.setPercentage(nElement / float(nFeat) * 100)
+            self.progress.emit(nElement / float(nFeat) * 100)
             add = False
             geom = QgsGeometry(inFeatA.geometry())
             diff_geom = QgsGeometry(geom)

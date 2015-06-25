@@ -50,7 +50,7 @@ class MultipartToSingleparts(GeoAlgorithm):
         self.addParameter(ParameterVector(self.INPUT, self.tr('Input layer')))
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Single parts')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT))
 
         geomType = self.multiToSingleGeom(layer.dataProvider().geometryType())
@@ -76,7 +76,7 @@ class MultipartToSingleparts(GeoAlgorithm):
                 writer.addFeature(outFeat)
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer
 

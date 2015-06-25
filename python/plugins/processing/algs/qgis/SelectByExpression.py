@@ -5,7 +5,7 @@
     SelectByExpression.py
     ---------------------
     Date                 : July 2014
-    Copyright            : (C) 2014 by Michaël Douchin
+    Copyright            : (C) 2014 by Michaï¿½l Douchin
 ***************************************************************************
 *                                                                         *
 *   This program is free software; you can redistribute it and/or modify  *
@@ -54,7 +54,7 @@ class SelectByExpression(GeoAlgorithm):
             self.tr('Modify current selection by'), self.METHODS, 0))
         self.addOutput(OutputVector(self.RESULT, self.tr('Selected (expression)'), True))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         filename = self.getParameterValue(self.LAYERNAME)
         layer = processing.getObject(filename)
         oldSelection = set(layer.selectedFeaturesIds())

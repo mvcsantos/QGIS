@@ -57,7 +57,7 @@ class RandomPointsAlongLines(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Random points')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.VECTOR))
         pointCount = float(self.getParameterValue(self.POINT_NUMBER))
@@ -124,7 +124,7 @@ class RandomPointsAlongLines(GeoAlgorithm):
                     index.insertFeature(f)
                     points[nPoints] = pnt
                     nPoints += 1
-                    progress.setPercentage(int(nPoints * total))
+                    self.progress.emit(int(nPoints * total))
             nIterations += 1
 
         if nPoints < pointCount:

@@ -50,7 +50,7 @@ class VectorSplit(GeoAlgorithm):
 
         self.addOutput(OutputDirectory(self.OUTPUT, self.tr('Output directory')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT))
         fieldName = self.getParameterValue(self.FIELD)
@@ -77,4 +77,4 @@ class VectorSplit(GeoAlgorithm):
                     writer.addFeature(f)
             del writer
 
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))

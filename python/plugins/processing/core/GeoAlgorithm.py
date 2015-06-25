@@ -50,6 +50,7 @@ class GeoAlgorithm(QObject):
     
     progress = pyqtSignal(int)
     setText = pyqtSignal(str)
+    setInfo = pyqtSignal(str)
 
     def __init__(self):
         # Call QObject init method
@@ -149,7 +150,7 @@ class GeoAlgorithm(QObject):
         return False, helpUrl
 
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         """Here goes the algorithm itself.
 
         There is no return value from this method.
@@ -215,7 +216,7 @@ class GeoAlgorithm(QObject):
 
     # =========================================================
 
-    def execute(self, progress=None, model=None):
+    def execute(self, model=None):
         """The method to use to call a processing algorithm.
 
         Although the body of the algorithm is in processAlgorithm(),
@@ -231,11 +232,11 @@ class GeoAlgorithm(QObject):
             self.resolveTemporaryOutputs()
             self.checkOutputFileExtensions()
             # TODO: remove progress from this method
-            self.runPreExecutionScript(progress)
-            self.processAlgorithm(progress)
+            self.runPreExecutionScript()
+            self.processAlgorithm()
             self.progress.emit(100)
-            self.convertUnsupportedFormats(progress)
-            self.runPostExecutionScript(progress)
+            self.convertUnsupportedFormats()
+            self.runPostExecutionScript()
         except GeoAlgorithmExecutionException, gaee:
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, gaee.msg)
             raise gaee
@@ -254,23 +255,23 @@ class GeoAlgorithm(QObject):
             raise GeoAlgorithmExecutionException(
                 str(e) + self.tr('\nSee log for more details'))
 
-    def runPostExecutionScript(self, progress):
+    def runPostExecutionScript(self):
         scriptFile = ProcessingConfig.getSetting(
             ProcessingConfig.POST_EXECUTION_SCRIPT)
-        self.runHookScript(scriptFile, progress)
+        self.runHookScript(scriptFile)
 
-    def runPreExecutionScript(self, progress):
+    def runPreExecutionScript(self):
         scriptFile = ProcessingConfig.getSetting(
             ProcessingConfig.PRE_EXECUTION_SCRIPT)
-        self.runHookScript(scriptFile, progress)
+        self.runHookScript(scriptFile)
 
-    def runHookScript(self, filename, progress):
+    def runHookScript(self, filename):
         if filename is None or not os.path.exists(filename):
             return
         try:
             script = 'import processing\n'
             ns = {}
-            ns['progress'] = progress
+            #ns['progress'] = progress
             ns['alg'] = self
             f = open(filename)
             lines = f.readlines()
@@ -282,7 +283,7 @@ class GeoAlgorithm(QObject):
             # all exceptions
             pass
 
-    def convertUnsupportedFormats(self, progress):
+    def convertUnsupportedFormats(self):
         i = 0
         #progress.setText()
         self.setText.emit(self.tr('Converting outputs'))

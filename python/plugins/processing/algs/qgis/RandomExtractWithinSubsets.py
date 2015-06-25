@@ -63,7 +63,7 @@ class RandomExtractWithinSubsets(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Extracted (random stratified)')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         filename = self.getParameterValue(self.INPUT)
 
         layer = dataobjects.getObjectFromUri(filename)
@@ -104,7 +104,7 @@ class RandomExtractWithinSubsets(GeoAlgorithm):
                     if attrs[index] == classValue:
                         classFeatures.append(i)
                     current += 1
-                    progress.setPercentage(int(current * total))
+                    self.progress.emit(int(current * total))
 
                 if method == 1:
                     selValue = int(round(value * len(classFeatures), 0))
@@ -125,5 +125,5 @@ class RandomExtractWithinSubsets(GeoAlgorithm):
         for (i, feat) in enumerate(features):
             if i in selran:
                 writer.addFeature(feat)
-            progress.setPercentage(100 * i / float(featureCount))
+            self.progress.emit(100 * i / float(featureCount))
         del writer

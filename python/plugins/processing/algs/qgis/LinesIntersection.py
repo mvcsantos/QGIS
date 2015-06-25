@@ -63,7 +63,7 @@ class LinesIntersection(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Intersections')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layerA = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT_A))
         layerB = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT_B))
         fieldA = self.getParameterValue(self.FIELD_A)
@@ -125,6 +125,6 @@ class LinesIntersection(GeoAlgorithm):
                                 writer.addFeature(outFeat)
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer

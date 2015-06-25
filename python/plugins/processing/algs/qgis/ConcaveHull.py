@@ -57,18 +57,18 @@ class ConcaveHull(GeoAlgorithm):
             self.tr('Split multipart geometry into singleparts geometries'), False))
         self.addOutput(OutputVector(ConcaveHull.OUTPUT, self.tr('Concave hull')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         #get parameters
         layer = dataobjects.getObjectFromUri(self.getParameterValue(ConcaveHull.INPUT))
         alpha = self.getParameterValue(self.ALPHA)
         holes = self.getParameterValue(self.HOLES)
         no_multigeom = self.getParameterValue(self.NO_MULTIGEOMETRY)
         #Delaunay triangulation from input point layer
-        progress.setText(self.tr('Creating Delaunay triangles...'))
+        self.setText.emit(self.tr('Creating Delaunay triangles...'))
         delone_triangles = processing.runalg("qgis:delaunaytriangulation", layer, None)['OUTPUT']
         delaunay_layer = processing.getObject(delone_triangles)
         #get max edge length from Delaunay triangles
-        progress.setText(self.tr('Computing edges max length...'))
+        self.setText.emit(self.tr('Computing edges max length...'))
         features = delaunay_layer.getFeatures()
         counter = 50./delaunay_layer.featureCount()
         lengths = []
@@ -78,17 +78,17 @@ class ConcaveHull(GeoAlgorithm):
             for i in range(len(line)-1):
                 lengths.append(sqrt(line[i].sqrDist(line[i+1])))
             edges[feat.id()] = max(lengths[-3:])
-            progress.setPercentage(feat.id()*counter)
+            self.progress.emit(feat.id()*counter)
         max_length = max(lengths)
         #get features with longest edge longer than alpha*max_length
-        progress.setText(self.tr('Removing features...'))
+        self.setText.emit(self.tr('Removing features...'))
         counter = 50./len(edges)
         i = 0
         ids = []
         for id, max_len in edges.iteritems():
             if max_len > alpha*max_length:
                 ids.append(id)
-            progress.setPercentage(50+i*counter)
+            self.progress.emit(50+i*counter)
             i += 1
         #remove features
         delaunay_layer.setSelectedFeatures(ids)
@@ -96,12 +96,12 @@ class ConcaveHull(GeoAlgorithm):
         delaunay_layer.deleteSelectedFeatures()
         delaunay_layer.commitChanges()
         #dissolve all Delaunay triangles
-        progress.setText(self.tr('Dissolving Delaunay triangles...'))
+        self.setText.emit(self.tr('Dissolving Delaunay triangles...'))
         dissolved = processing.runalg("qgis:dissolve", delaunay_layer,
                                       True, '', None)['OUTPUT']
         dissolved_layer = processing.getObject(dissolved)
         #save result
-        progress.setText(self.tr('Saving data...'))
+        self.setText.emit(self.tr('Saving data...'))
         feat = QgsFeature()
         dissolved_layer.getFeatures(QgsFeatureRequest().setFilterFid(0)).nextFeature(feat)
         writer = self.getOutputFromName(self.OUTPUT).getVectorWriter(

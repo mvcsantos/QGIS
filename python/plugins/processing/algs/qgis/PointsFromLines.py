@@ -52,7 +52,7 @@ class PointsFromLines(GeoAlgorithm):
             self.tr('Vector layer'), [ParameterVector.VECTOR_TYPE_LINE]))
         self.addOutput(OutputVector(self.OUTPUT_LAYER, self.tr('Points along line')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT_VECTOR))
 
         rasterPath = unicode(self.getParameterValue(self.INPUT_RASTER))
@@ -111,7 +111,7 @@ class PointsFromLines(GeoAlgorithm):
             self.lineId += 1
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer
 

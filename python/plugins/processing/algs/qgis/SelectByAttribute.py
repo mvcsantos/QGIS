@@ -68,7 +68,7 @@ class SelectByAttribute(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Selected (attribute)'), True))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         fileName = self.getParameterValue(self.INPUT)
         layer = dataobjects.getObjectFromUri(fileName)
         fieldName = self.getParameterValue(self.FIELD)
@@ -117,7 +117,7 @@ class SelectByAttribute(GeoAlgorithm):
         for count, f in enumerate(features):
             if expression.evaluate(f, fields):
                 selected.append(f.id())
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))
 
         layer.setSelectedFeatures(selected)
         self.setOutputValue(self.OUTPUT, fileName)

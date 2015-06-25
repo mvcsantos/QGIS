@@ -46,7 +46,7 @@ class LinesToPolygons(GeoAlgorithm):
             self.tr('Input layer'), [ParameterVector.VECTOR_TYPE_LINE]))
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Polygons from lines')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT))
 
         writer = self.getOutputFromName(self.OUTPUT).getVectorWriter(
@@ -73,7 +73,7 @@ class LinesToPolygons(GeoAlgorithm):
                 writer.addFeature(outFeat)
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer
 

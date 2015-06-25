@@ -48,7 +48,7 @@ class Merge(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Merged')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer1 = dataobjects.getObjectFromUri(
             self.getParameterValue(self.LAYER1))
         layer2 = dataobjects.getObjectFromUri(
@@ -104,6 +104,6 @@ class Merge(GeoAlgorithm):
                 writer.addFeature(f)
 
                 count += 1
-                progress.setPercentage(int(count * total))
+                self.progress.emit(int(count * total))
 
         del writer

@@ -55,7 +55,7 @@ class StatisticsByCategories(GeoAlgorithm):
 
         self.addOutput(OutputTable(self.OUTPUT, self.tr('Statistics by category')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT_LAYER))
         valuesFieldName = self.getParameterValue(self.VALUES_FIELD_NAME)
         categoriesFieldName = self.getParameterValue(self.CATEGORIES_FIELD_NAME)
@@ -70,7 +70,7 @@ class StatisticsByCategories(GeoAlgorithm):
         nFeat = 0
         for feat in features:
             nFeat += 1
-            progress.setPercentage(int(100 * nFeats / nFeat))
+            self.progress.emit(int(100 * nFeats / nFeat))
             attrs = feat.attributes()
             try:
                 value = float(attrs[valuesField])

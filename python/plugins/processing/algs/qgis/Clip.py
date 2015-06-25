@@ -48,7 +48,7 @@ class Clip(GeoAlgorithm):
             self.tr('Clip layer'), [ParameterVector.VECTOR_TYPE_ANY]))
         self.addOutput(OutputVector(Clip.OUTPUT, self.tr('Clipped')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layerA = dataobjects.getObjectFromUri(
             self.getParameterValue(Clip.INPUT))
         layerB = dataobjects.getObjectFromUri(
@@ -124,6 +124,6 @@ class Clip(GeoAlgorithm):
                         continue
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer

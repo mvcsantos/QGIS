@@ -72,7 +72,7 @@ class FieldsCalculator(GeoAlgorithm):
         self.addParameter(ParameterString(self.FORMULA, self.tr('Formula')))
         self.addOutput(OutputVector(self.OUTPUT_LAYER, self.tr('Calculated')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT_LAYER))
         fieldName = self.getParameterValue(self.FIELD_NAME)
         fieldType = self.TYPES[self.getParameterValue(self.FIELD_TYPE)]
@@ -137,7 +137,7 @@ class FieldsCalculator(GeoAlgorithm):
                 outFeature[fieldName] = value
                 writer.addFeature(outFeature)
 
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
         del writer
 
         if not calculationSuccess:

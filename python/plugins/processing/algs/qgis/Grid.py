@@ -69,7 +69,7 @@ class Grid(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Grid')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         idx = self.getParameterValue(self.TYPE)
         extent = self.getParameterValue(self.EXTENT).split(',')
         hSpacing = self.getParameterValue(self.HSPACING)
