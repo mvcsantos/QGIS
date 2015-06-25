@@ -35,7 +35,7 @@ class Buffer(QtCore.QObject):
     def __init__(self, parent=None):
         QtCore.QObject.__init__(self, parent)
     
-    def buffering(writer, distance, field, useField, layer, dissolve, segments):
+    def buffering(self, writer, distance, field, useField, layer, dissolve, segments):
     
         if useField:
             field = layer.fieldNameIndex(field)
