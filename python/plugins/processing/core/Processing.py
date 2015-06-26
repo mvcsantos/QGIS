@@ -366,6 +366,11 @@ class Processing(QObject):
         alg.progress.connect(progress.setPercentage)
         alg.progress.connect(showProgress)
         alg.setText.connect(progress.setText)
+        alg.setCommand.connect(self.setCommand)
+        alg.setConsoleInfo.connect(self.setConsoleInfo)
+        alg.setInfo.connect(self.setInfo)
+                
+        
         
         objThread = QThread()
         Processing.algExecutor = AlgorithmExecutor(alg, progress)

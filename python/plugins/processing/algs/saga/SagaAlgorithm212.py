@@ -36,7 +36,7 @@ from processing.core.ProcessingLog import ProcessingLog
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 from processing.core.parameters import getParameterFromString, ParameterExtent, ParameterRaster, ParameterVector, ParameterTable, ParameterMultipleInput, ParameterBoolean, ParameterFixedTable, ParameterNumber, ParameterSelection
 from processing.core.outputs import getOutputFromString, OutputTable, OutputVector, OutputRaster
-import SagaUtils
+from processing.algs.saga.SagaUtils import SagaUtils
 from SagaGroupNameDecorator import SagaGroupNameDecorator
 from processing.tools import dataobjects
 from processing.tools.system import getTempFilename, isWindows, getTempFilenameInTempFolder
@@ -53,6 +53,7 @@ class SagaAlgorithm212(GeoAlgorithm):
 
     def __init__(self, descriptionfile):
         GeoAlgorithm.__init__(self)
+        self.sagaUtils = SagaUtils(parent=self)
         self.hardcodedStrings = []
         self.allowUnmatchingGridExtents = False
         self.descriptionFile = descriptionfile
@@ -99,7 +100,7 @@ class SagaAlgorithm212(GeoAlgorithm):
         lines.close()
 
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         commands = list()
         self.exportedLayers = {}
 
@@ -255,15 +256,16 @@ class SagaAlgorithm212(GeoAlgorithm):
 
         # 4: Run SAGA
         commands = self.editCommands(commands)
-        SagaUtils.createSagaBatchJobFileFromSagaCommands(commands)
+        self.sagaUtils.createSagaBatchJobFileFromSagaCommands(commands)
         loglines = []
         loglines.append(self.tr('SAGA execution commands'))
         for line in commands:
-            progress.setCommand(line)
+            self.setCommand.emit(line)
             loglines.append(line)
         if ProcessingConfig.getSetting(SagaUtils.SAGA_LOG_COMMANDS):
             ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
-        SagaUtils.executeSaga(progress)
+            
+        self.sagaUtils.executeSaga()
 
     def preProcessInputs(self):
         name = self.commandLineName().replace('.', '_')[len('saga:'):]

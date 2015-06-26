@@ -51,6 +51,8 @@ class GeoAlgorithm(QObject):
     progress = pyqtSignal(int)
     setText = pyqtSignal(str)
     setInfo = pyqtSignal(str)
+    setCommand = pyqtSignal(str)
+    setConsoleInfo = pyqtSignal(str)
 
     def __init__(self):
         # Call QObject init method

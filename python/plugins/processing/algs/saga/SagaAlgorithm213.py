@@ -33,7 +33,7 @@ from processing.core.ProcessingLog import ProcessingLog
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
 from processing.core.parameters import ParameterRaster, ParameterVector, ParameterTable, ParameterMultipleInput, ParameterBoolean, ParameterFixedTable, ParameterExtent, ParameterNumber, ParameterSelection
 from processing.core.outputs import OutputRaster, OutputVector, OutputTable
-import SagaUtils
+from processing.algs.saga.SagaUtils import SagaUtils
 from processing.tools import dataobjects
 from processing.tools.system import getTempFilenameInTempFolder, getTempFilename, isWindows
 
@@ -42,6 +42,9 @@ sessionExportedLayers = {}
 class SagaAlgorithm213(SagaAlgorithm212):
 
     OUTPUT_EXTENT = 'OUTPUT_EXTENT'
+    
+    def __init__(self, descriptionFile):
+        super(SagaAlgorithm213, self).__init__(descriptionFile)
 
     def getCopy(self):
         newone = SagaAlgorithm213(self.descriptionFile)
@@ -206,15 +209,15 @@ class SagaAlgorithm213(SagaAlgorithm212):
 
         # 4: Run SAGA
         commands = self.editCommands(commands)
-        SagaUtils.createSagaBatchJobFileFromSagaCommands(commands)
+        self.sagaUtils.createSagaBatchJobFileFromSagaCommands(commands)
         loglines = []
         loglines.append(self.tr('SAGA execution commands'))
         for line in commands:
-            progress.setCommand(line)
+            self.setCommand.emit(line)
             loglines.append(line)
         if ProcessingConfig.getSetting(SagaUtils.SAGA_LOG_COMMANDS):
             ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
-        SagaUtils.executeSaga(progress)
+        self.sagaUtils.executeSaga(progress)
 
     def exportRasterLayer(self, source):
         global sessionExportedLayers

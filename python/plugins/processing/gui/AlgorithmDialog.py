@@ -205,10 +205,13 @@ class AlgorithmDialog(AlgorithmDialogBase):
                     ProcessingLog.addToLog(
                         ProcessingLog.LOG_ALGORITHM, command)
 
-                 # ----------------------------------
-            
+                # ----------------------------------
+                 
                 self.alg.progress.connect(self.setPercentage)
                 self.alg.setText.connect(self.setText)
+                self.alg.setCommand.connect(self.setCommand)
+                self.alg.setConsoleInfo.connect(self.setConsoleInfo)
+                self.alg.setInfo.connect(self.setInfo)
                 
                 objThread = QThread()
                 AlgorithmDialog.algExecutor = AlgorithmExecutor(self.alg, self)
