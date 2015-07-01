@@ -34,6 +34,8 @@ sessionExportedLayers = {}
 
 class SagaAlgorithm214(SagaAlgorithm213):
 
+    def __init__(self, descriptionFile):
+        super(SagaAlgorithm214, self).__init__(descriptionFile);
 
     def getCopy(self):
         newone = SagaAlgorithm214(self.descriptionFile)

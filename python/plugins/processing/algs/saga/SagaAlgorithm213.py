@@ -45,7 +45,6 @@ class SagaAlgorithm213(SagaAlgorithm212):
     
     def __init__(self, descriptionFile):
         super(SagaAlgorithm213, self).__init__(descriptionFile)
-        self.sagaUtils = SagaUtils(parent=self)
 
     def getCopy(self):
         newone = SagaAlgorithm213(self.descriptionFile)
