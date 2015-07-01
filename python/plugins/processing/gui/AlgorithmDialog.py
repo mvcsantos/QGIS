@@ -220,7 +220,10 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 AlgorithmDialog.algExecutor.setResult.connect(self.setAlgExeResult)
                 self.algExecutor.finished.connect(objThread.quit)
 
-                objThread.start()
+                try:
+                    objThread.start()
+                except Exception, e:
+                    ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
                 i = 0
                 while(self.notFinished):
                     self.setInfo(

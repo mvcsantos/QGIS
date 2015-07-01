@@ -45,6 +45,7 @@ class SagaAlgorithm213(SagaAlgorithm212):
     
     def __init__(self, descriptionFile):
         super(SagaAlgorithm213, self).__init__(descriptionFile)
+        self.sagaUtils = SagaUtils(parent=self)
 
     def getCopy(self):
         newone = SagaAlgorithm213(self.descriptionFile)
@@ -52,7 +53,7 @@ class SagaAlgorithm213(SagaAlgorithm212):
         return newone
 
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         commands = list()
         self.exportedLayers = {}
 
@@ -217,7 +218,7 @@ class SagaAlgorithm213(SagaAlgorithm212):
             loglines.append(line)
         if ProcessingConfig.getSetting(SagaUtils.SAGA_LOG_COMMANDS):
             ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
-        self.sagaUtils.executeSaga(progress)
+        self.sagaUtils.executeSaga()
 
     def exportRasterLayer(self, source):
         global sessionExportedLayers
