@@ -27,7 +27,9 @@ __revision__ = '$Format:%H$'
 
 from qgis.core import QgsFeature, QgsGeometry
 from processing.tools import vector
+from processing.core.ProcessingLog import ProcessingLog
 from PyQt4 import QtCore
+import sys
 
 
 class Buffer(QtCore.QObject):

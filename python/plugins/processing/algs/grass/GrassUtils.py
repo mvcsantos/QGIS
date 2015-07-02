@@ -32,14 +32,14 @@ import subprocess
 import os
 
 from qgis.core import QgsApplication
-from PyQt4.QtCore import QCoreApplication
+from PyQt4.QtCore import QCoreApplication, QObject
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.ProcessingLog import ProcessingLog
 from processing.tools.system import userFolder, isMac, isWindows, mkdir, tempFolder
 from processing.tests.TestData import points
 
 
-class GrassUtils:
+class GrassUtils(QObject):
 
     GRASS_REGION_XMIN = 'GRASS_REGION_XMIN'
     GRASS_REGION_YMIN = 'GRASS_REGION_YMIN'
@@ -56,6 +56,9 @@ class GrassUtils:
     projectionSet = False
 
     isGrassInstalled = False
+
+    def __init__(self, parent=None):
+        QObject.__init__(parent)
 
     @staticmethod
     def grassBatchJobFilename():
@@ -263,7 +266,7 @@ class GrassUtils:
         return command
 
     @staticmethod
-    def executeGrass(commands, progress, outputCommands=None):
+    def executeGrass(commands, outputCommands=None):
         loglines = []
         loglines.append('GRASS execution console output')
         grassOutDone = False
@@ -276,11 +279,11 @@ class GrassUtils:
             stderr=subprocess.STDOUT,
             universal_newlines=True,
         ).stdout
-        progress.setInfo('GRASS commands output:')
+        self.parent().setInfo.emit('GRASS commands output:')
         for line in iter(proc.readline, ''):
             if 'GRASS_INFO_PERCENT' in line:
                 try:
-                    progress.setPercentage(int(line[len('GRASS_INFO_PERCENT')
+                    self.parent().progress.emit(int(line[len('GRASS_INFO_PERCENT')
                             + 2:]))
                 except:
                     pass
@@ -288,7 +291,7 @@ class GrassUtils:
                 if 'r.out' in line or 'v.out' in line:
                     grassOutDone = True
                 loglines.append(line)
-                progress.setConsoleInfo(line)
+                self.parent().setConsoleInfo.emit(line)
 
         # Some GRASS scripts, like r.mapcalculator or r.fillnulls, call
         # other GRASS scripts during execution. This may override any
@@ -309,13 +312,13 @@ class GrassUtils:
             for line in iter(proc.readline, ''):
                 if 'GRASS_INFO_PERCENT' in line:
                     try:
-                        progress.setPercentage(int(
+                        self.parent().progress.emit(int(
                             line[len('GRASS_INFO_PERCENT') + 2:]))
                     except:
                         pass
                 else:
                     loglines.append(line)
-                    progress.setConsoleInfo(line)
+                    self.parent().setConsoleInfo.emit(line)
 
         if ProcessingConfig.getSetting(GrassUtils.GRASS_LOG_CONSOLE):
             ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)

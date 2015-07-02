@@ -72,6 +72,8 @@ class GrassAlgorithm(GeoAlgorithm):
         # GRASS console output, needed to do postprocessing in case GRASS
         # dumps results to the console
         self.consoleOutput = []
+        
+        self.grassUtils = GrassUtils(parent=self)
 
     def getCopy(self):
         newone = GrassAlgorithm(self.descriptionFile)
@@ -196,9 +198,9 @@ class GrassAlgorithm(GeoAlgorithm):
             cellsize = 100
         return cellsize
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         if system.isWindows():
-            path = GrassUtils.grassPath()
+            path = self.grassUtils.grassPath()
             if path == '':
                 raise GeoAlgorithmExecutionException(
                     self.tr('GRASS folder is not configured.\nPlease '
@@ -211,11 +213,11 @@ class GrassAlgorithm(GeoAlgorithm):
         # If GRASS session has been created outside of this algorithm then
         # get the list of layers loaded in GRASS otherwise start a new
         # session
-        existingSession = GrassUtils.sessionRunning
+        existingSession = self.grassUtils.sessionRunning
         if existingSession:
-            self.exportedLayers = GrassUtils.getSessionLayers()
+            self.exportedLayers = self.grassUtils.getSessionLayers()
         else:
-            GrassUtils.startGrassSession()
+            self.grassUtils.startGrassSession()
 
         # 1: Export layer to grass mapset
 
@@ -390,20 +392,19 @@ class GrassAlgorithm(GeoAlgorithm):
         loglines = []
         loglines.append(self.tr('GRASS execution commands'))
         for line in commands:
-            progress.setCommand(line)
+            self.setCommand.emit(line)
             loglines.append(line)
         if ProcessingConfig.getSetting(GrassUtils.GRASS_LOG_COMMANDS):
             ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
-        self.consoleOutput = GrassUtils.executeGrass(commands, progress,
-                outputCommands)
+        self.consoleOutput = self.grassUtils.executeGrass(commands, outputCommands)
         self.postProcessResults()
 
         # If the session has been created outside of this algorithm, add
         # the new GRASS layers to it otherwise finish the session
         if existingSession:
-            GrassUtils.addSessionLayers(self.exportedLayers)
+            self.grassUtils.addSessionLayers(self.exportedLayers)
         else:
-            GrassUtils.endGrassSession()
+            self.grassUtils.endGrassSession()
 
     def postProcessResults(self):
         name = self.commandLineName().replace('.', '_')[len('grass:'):]
@@ -449,16 +450,16 @@ class GrassAlgorithm(GeoAlgorithm):
         return command
 
     def setSessionProjectionFromProject(self, commands):
-        if not GrassUtils.projectionSet:
+        if not self.grassUtils.projectionSet:
             proj4 = iface.mapCanvas().mapRenderer().destinationCrs().toProj4()
             command = 'g.proj'
             command += ' -c'
             command += ' proj4="' + proj4 + '"'
             commands.append(command)
-            GrassUtils.projectionSet = True
+            self.grassUtils.projectionSet = True
 
     def setSessionProjectionFromLayer(self, layer, commands):
-        if not GrassUtils.projectionSet:
+        if not self.grassUtils.projectionSet:
             qGisLayer = dataobjects.getObjectFromUri(layer)
             if qGisLayer:
                 proj4 = str(qGisLayer.crs().toProj4())
@@ -466,7 +467,7 @@ class GrassAlgorithm(GeoAlgorithm):
                 command += ' -c'
                 command += ' proj4="' + proj4 + '"'
                 commands.append(command)
-                GrassUtils.projectionSet = True
+                self.grassUtils.projectionSet = True
 
     def exportRasterLayer(self, layer):
         destFilename = self.getTempFilename()
@@ -490,7 +491,7 @@ class GrassAlgorithm(GeoAlgorithm):
         return 'grass:' + self.name[:self.name.find(' ')]
 
     def checkBeforeOpeningParametersDialog(self):
-        msg = GrassUtils.checkGrassIsInstalled()
+        msg = self.grassUtils.checkGrassIsInstalled()
         if msg is not None:
             html = self.tr(
                 '<p>This algorithm requires GRASS to be run. Unfortunately, '
