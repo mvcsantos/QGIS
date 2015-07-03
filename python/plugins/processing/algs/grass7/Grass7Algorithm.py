@@ -71,6 +71,7 @@ class Grass7Algorithm(GeoAlgorithm):
         # GRASS GIS 7 console output, needed to do postprocessing in case GRASS
         # dumps results to the console
         self.consoleOutput = []
+        self.grass7Utils = Grass7Utils(parent=self)
 
     def getCopy(self):
         newone = Grass7Algorithm(self.descriptionFile)
@@ -200,7 +201,7 @@ class Grass7Algorithm(GeoAlgorithm):
             cellsize = 100
         return cellsize
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         if system.isWindows():
             path = Grass7Utils.grassPath()
             if path == '':
@@ -427,12 +428,11 @@ class Grass7Algorithm(GeoAlgorithm):
         loglines = []
         loglines.append(self.tr('GRASS GIS 7 execution commands'))
         for line in commands:
-            progress.setCommand(line)
+            self.setCommand.emit(line)
             loglines.append(line)
         if ProcessingConfig.getSetting(Grass7Utils.GRASS_LOG_COMMANDS):
             ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
-        self.consoleOutput = Grass7Utils.executeGrass7(commands, progress,
-                                                       outputCommands)
+        self.consoleOutput = self.grass7Utils.executeGrass7(commands, outputCommands)
         self.postProcessResults()
 
         # If the session has been created outside of this algorithm, add

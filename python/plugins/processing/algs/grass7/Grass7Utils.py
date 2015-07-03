@@ -30,14 +30,14 @@ import shutil
 import subprocess
 import os
 from qgis.core import QgsApplication
-from PyQt4.QtCore import QCoreApplication
+from PyQt4.QtCore import QCoreApplication, QObject
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.ProcessingLog import ProcessingLog
 from processing.tools.system import userFolder, isWindows, isMac, tempFolder, mkdir
 from processing.tests.TestData import points
 
 
-class Grass7Utils:
+class Grass7Utils(QObject):
 
     GRASS_REGION_XMIN = 'GRASS7_REGION_XMIN'
     GRASS_REGION_YMIN = 'GRASS7_REGION_YMIN'
@@ -55,6 +55,9 @@ class Grass7Utils:
 
     isGrass7Installed = False
 
+    def __init__(self, parent=None):
+        QObject.__init__(parent)
+    
     @staticmethod
     def grassBatchJobFilename():
         '''This is used in Linux. This is the batch job that we assign to
@@ -260,8 +263,7 @@ class Grass7Utils:
 
         return command
 
-    @staticmethod
-    def executeGrass7(commands, progress, outputCommands=None):
+    def executeGrass7(self, commands, outputCommands=None):
         loglines = []
         loglines.append(Grass7Utils.tr('GRASS GIS 7 execution console output'))
         grassOutDone = False
@@ -277,14 +279,14 @@ class Grass7Utils:
         for line in iter(proc.readline, ''):
             if 'GRASS_INFO_PERCENT' in line:
                 try:
-                    progress.setPercentage(int(line[len('GRASS_INFO_PERCENT') + 2:]))
+                    self.parent().progress.emit(int(line[len('GRASS_INFO_PERCENT') + 2:]))
                 except:
                     pass
             else:
                 if 'r.out' in line or 'v.out' in line:
                     grassOutDone = True
                 loglines.append(line)
-                progress.setConsoleInfo(line)
+                self.parent().setConsoleInfo.emit(line)
 
         # Some GRASS scripts, like r.mapcalculator or r.fillnulls, call
         # other GRASS scripts during execution. This may override any
@@ -305,13 +307,13 @@ class Grass7Utils:
             for line in iter(proc.readline, ''):
                 if 'GRASS_INFO_PERCENT' in line:
                     try:
-                        progress.setPercentage(int(
+                        self.parent().progress.emit(int(
                             line[len('GRASS_INFO_PERCENT') + 2:]))
                     except:
                         pass
                 else:
                     loglines.append(line)
-                    progress.setConsoleInfo(line)
+                    self.parent().setConsoleInfo.emit(line)
 
         if ProcessingConfig.getSetting(Grass7Utils.GRASS_LOG_CONSOLE):
             ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
