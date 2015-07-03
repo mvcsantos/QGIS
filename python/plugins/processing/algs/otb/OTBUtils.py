@@ -30,7 +30,7 @@ __revision__ = '$Format:%H$'
 
 import os
 import re
-from PyQt4.QtCore import QCoreApplication
+from PyQt4.QtCore import QCoreApplication, QObject
 from qgis.core import QgsApplication
 import subprocess
 from processing.core.ProcessingConfig import ProcessingConfig
@@ -41,12 +41,15 @@ import xml.etree.ElementTree as ET
 import traceback
 
 
-class OTBUtils:
+class OTBUtils(QObject):
 
     OTB_FOLDER = "OTB_FOLDER"
     OTB_LIB_FOLDER = "OTB_LIB_FOLDER"
     OTB_SRTM_FOLDER = "OTB_SRTM_FOLDER"
     OTB_GEOID_FILE = "OTB_GEOID_FILE"
+
+    def __init__(self, parent=None):
+        QObject.__init__(parent)
 
     @staticmethod
     def findOtbPath():
@@ -126,8 +129,8 @@ class OTBUtils:
     def otbDescriptionPath():
         return os.path.join(os.path.dirname(__file__), "description")
 
-    @staticmethod
-    def executeOtb(commands, progress):
+    
+    def executeOtb(commands):
         loglines = []
         loglines.append(OTBUtils.tr("OTB execution console output"))
         os.putenv('ITK_AUTOLOAD_PATH', OTBUtils.otbLibPath())
@@ -138,10 +141,10 @@ class OTBUtils:
                 idx = line.find("[*")
                 perc = int(line[idx-4:idx-2].strip(" "))
                 if perc != 0:
-                    progress.setPercentage(perc)
+                    self.parent().progress.emit(perc)
             else:
                 loglines.append(line)
-                progress.setConsoleInfo(line)
+                self.parent().setConsoleInfo.emit(line)
 
         ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
 
