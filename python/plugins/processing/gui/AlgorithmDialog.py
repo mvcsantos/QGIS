@@ -169,6 +169,8 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 return
             self.btnRun.setEnabled(False)
             self.btnClose.setEnabled(False)
+            self.btnCancel.setEnabled(True)
+            
             buttons = self.mainWidget.iterateButtons
             self.iterateParam = None
 
@@ -187,7 +189,7 @@ class AlgorithmDialog(AlgorithmDialogBase):
             except:
                 pass
 
-            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+            #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
 
             self.setInfo(
                 self.tr('<b>Algorithm %s starting...</b>') % self.alg.name)
@@ -214,12 +216,18 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 self.alg.setInfo.connect(self.setInfo)
                 
                 objThread = QThread()
+                objThread.setTerminationEnabled(True)
+                
+                # Button to quit the thread
+                self.btnCancel.clicked.connect(objThread.terminate)
+                objThread.terminated.connect(self.quitAlgExecution)
+                
                 AlgorithmDialog.algExecutor = AlgorithmExecutor(self.alg, self)
                 AlgorithmDialog.algExecutor.moveToThread(objThread)
                 objThread.started.connect(AlgorithmDialog.algExecutor.runalg)
                 AlgorithmDialog.algExecutor.setResult.connect(self.setAlgExeResult)
                 self.algExecutor.finished.connect(objThread.quit)
-
+                
                 try:
                     objThread.start()
                 except Exception, e:
@@ -282,4 +290,12 @@ class AlgorithmDialog(AlgorithmDialogBase):
         self.algExecutor.finished.emit()
         self.notFinished = False
         self.setInfo(self.tr('<b>Algorithm thread finish!</b>'))
+        
+    def quitAlgExecution(self):
+        self.algExeResult = False
+        self.notFinished = False
+        ProcessingLog.addToLog("Quitting thread!", ProcessingLog.LOG_INFO)
+        
+    def quitAttempt(self):
+        ProcessingLog.addToLog("Trying to quit the thread!", ProcessingLog.LOG_INFO)
         

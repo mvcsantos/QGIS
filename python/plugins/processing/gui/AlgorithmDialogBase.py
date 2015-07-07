@@ -29,7 +29,7 @@ import os
 
 from PyQt4 import uic
 from PyQt4.QtCore import QCoreApplication, QUrl
-from PyQt4.QtGui import QApplication, QDialogButtonBox
+from PyQt4.QtGui import QApplication, QDialogButtonBox, QPushButton
 
 from qgis.utils import iface
 
@@ -59,8 +59,15 @@ class AlgorithmDialogBase(BASE, WIDGET):
         # Rename OK button to Run
         self.btnRun = self.buttonBox.button(QDialogButtonBox.Ok)
         self.btnRun.setText(self.tr('Run'))
-
+        
         self.btnClose = self.buttonBox.button(QDialogButtonBox.Close)
+        
+        
+        
+        self.btnCancel = QPushButton("Cancel")
+        self.btnCancel.setEnabled(False)
+        
+        self.buttonBox.addButton(self.btnCancel, QDialogButtonBox.ActionRole)
 
         self.setWindowTitle(self.alg.name)
 
@@ -99,6 +106,7 @@ class AlgorithmDialogBase(BASE, WIDGET):
         self.progressBar.setValue(0)
         self.btnRun.setEnabled(True)
         self.btnClose.setEnabled(True)
+        self.btnCancel.setEnabled(False)
 
     def setInfo(self, msg, error=False):
         if error:
