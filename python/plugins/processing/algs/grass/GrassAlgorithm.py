@@ -200,7 +200,7 @@ class GrassAlgorithm(GeoAlgorithm):
 
     def processAlgorithm(self):
         if system.isWindows():
-            path = self.grassUtils.grassPath()
+            path = GrassUtils.grassPath()
             if path == '':
                 raise GeoAlgorithmExecutionException(
                     self.tr('GRASS folder is not configured.\nPlease '
@@ -213,11 +213,11 @@ class GrassAlgorithm(GeoAlgorithm):
         # If GRASS session has been created outside of this algorithm then
         # get the list of layers loaded in GRASS otherwise start a new
         # session
-        existingSession = self.grassUtils.sessionRunning
+        existingSession = GrassUtils.sessionRunning
         if existingSession:
-            self.exportedLayers = self.grassUtils.getSessionLayers()
+            self.exportedLayers = GrassUtils.getSessionLayers()
         else:
-            self.grassUtils.startGrassSession()
+            GrassUtils.startGrassSession()
 
         # 1: Export layer to grass mapset
 
@@ -402,9 +402,9 @@ class GrassAlgorithm(GeoAlgorithm):
         # If the session has been created outside of this algorithm, add
         # the new GRASS layers to it otherwise finish the session
         if existingSession:
-            self.grassUtils.addSessionLayers(self.exportedLayers)
+            GrassUtils.addSessionLayers(self.exportedLayers)
         else:
-            self.grassUtils.endGrassSession()
+            GrassUtils.endGrassSession()
 
     def postProcessResults(self):
         name = self.commandLineName().replace('.', '_')[len('grass:'):]
@@ -450,16 +450,16 @@ class GrassAlgorithm(GeoAlgorithm):
         return command
 
     def setSessionProjectionFromProject(self, commands):
-        if not self.grassUtils.projectionSet:
+        if not GrassUtils.projectionSet:
             proj4 = iface.mapCanvas().mapRenderer().destinationCrs().toProj4()
             command = 'g.proj'
             command += ' -c'
             command += ' proj4="' + proj4 + '"'
             commands.append(command)
-            self.grassUtils.projectionSet = True
+            GrassUtils.projectionSet = True
 
     def setSessionProjectionFromLayer(self, layer, commands):
-        if not self.grassUtils.projectionSet:
+        if not GrassUtils.projectionSet:
             qGisLayer = dataobjects.getObjectFromUri(layer)
             if qGisLayer:
                 proj4 = str(qGisLayer.crs().toProj4())
@@ -467,7 +467,7 @@ class GrassAlgorithm(GeoAlgorithm):
                 command += ' -c'
                 command += ' proj4="' + proj4 + '"'
                 commands.append(command)
-                self.grassUtils.projectionSet = True
+                GrassUtils.projectionSet = True
 
     def exportRasterLayer(self, layer):
         destFilename = self.getTempFilename()
@@ -491,7 +491,7 @@ class GrassAlgorithm(GeoAlgorithm):
         return 'grass:' + self.name[:self.name.find(' ')]
 
     def checkBeforeOpeningParametersDialog(self):
-        msg = self.grassUtils.checkGrassIsInstalled()
+        msg = GrassUtils.checkGrassIsInstalled()
         if msg is not None:
             html = self.tr(
                 '<p>This algorithm requires GRASS to be run. Unfortunately, '

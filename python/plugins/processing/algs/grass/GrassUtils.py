@@ -265,7 +265,6 @@ class GrassUtils(QObject):
 
         return command
 
-    @staticmethod
     def executeGrass(commands, outputCommands=None):
         loglines = []
         loglines.append('GRASS execution console output')
