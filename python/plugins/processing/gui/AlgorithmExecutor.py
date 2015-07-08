@@ -16,13 +16,11 @@ class AlgorithmExecutor(QObject):
     #process = QtCore.pyqtSignal(int)
     #stop = QtCore.pyqtSignal()
     setResult= pyqtSignal()
-    finished = pyqtSignal()
+    finished = pyqtSignal(bool)
 
-    def __init__(self, alg, progress = None, parent = None):
+    def __init__(self, alg, parent = None):
         QObject.__init__(self, parent)
         self.alg = alg
-        self.progress = progress
-        self.result = True
 
     def runalg(self):
         """Executes a given algorithm, showing its progress in the
@@ -32,14 +30,12 @@ class AlgorithmExecutor(QObject):
         could not be completed.
         """
         try:
-            self.alg.execute(self.progress)
-            
-            self.setResult.emit()
+            self.alg.execute()
+            self.finished.emit(True)
         except Exception, e:
             ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
-            self.setResult.emit()
             print e
-            self.result = False
+            self.finished.emit(False)
 
     def runalgIterating():
         pass
