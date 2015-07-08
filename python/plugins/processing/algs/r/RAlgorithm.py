@@ -68,6 +68,7 @@ class RAlgorithm(GeoAlgorithm):
         GeoAlgorithm.__init__(self)
         self.script = script
         self.descriptionFile = descriptionFile
+        self.rUtils = RUtils(parent=self)
         if script is not None:
             self.defineCharacteristicsFromScript()
         if descriptionFile is not None:
@@ -228,7 +229,7 @@ class RAlgorithm(GeoAlgorithm):
             raise WrongScriptException(
                 self.tr('Could not load R script: %s.\n Problem with line %s' % (self.descriptionFile, line)))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         if isWindows():
             path = RUtils.RFolder()
             if path == '':
@@ -239,9 +240,9 @@ class RAlgorithm(GeoAlgorithm):
         loglines.append(self.tr('R execution commands'))
         loglines += self.getFullSetOfRCommands()
         for line in loglines:
-            progress.setCommand(line)
+            self.setCommand.emit(line)
         ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
-        RUtils.executeRAlgorithm(self, progress)
+        self.rUtils.executeRAlgorithm(self)
         if self.showPlots:
             htmlfilename = self.getOutputValue(RAlgorithm.RPLOTS)
             f = open(htmlfilename, 'w')

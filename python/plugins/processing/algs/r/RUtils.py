@@ -30,19 +30,23 @@ import os
 import stat
 import subprocess
 
-from PyQt4.QtCore import QSettings, QCoreApplication
+from PyQt4.QtCore import QSettings, QCoreApplication, QObject
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.ProcessingLog import ProcessingLog
 from processing.tools.system import userFolder, isWindows, mkdir
 
 
-class RUtils:
+class RUtils(QObject):
 
     RSCRIPTS_FOLDER = 'R_SCRIPTS_FOLDER'
     R_FOLDER = 'R_FOLDER'
     R_USE64 = 'R_USE64'
     R_LIBS_USER = 'R_LIBS_USER'
 
+
+    def __init__(self, parent=None):
+        QObject.__init__(parent)
+        
     @staticmethod
     def RFolder():
         folder = ProcessingConfig.getSetting(RUtils.R_FOLDER)
@@ -84,8 +88,7 @@ class RUtils:
     def getConsoleOutputFilename():
         return RUtils.getRScriptFilename() + '.Rout'
 
-    @staticmethod
-    def executeRAlgorithm(alg, progress):
+    def executeRAlgorithm(alg):
         RUtils.verboseCommands = alg.getVerboseCommands()
         RUtils.createRScriptFromRCommands(alg.getFullSetOfRCommands())
         if isWindows():
@@ -123,7 +126,7 @@ class RUtils:
         loglines.append(RUtils.tr('R execution console output'))
         loglines += RUtils.allConsoleResults
         for line in loglines:
-            progress.setConsoleInfo(line)
+            self.parent().setConsoleInfo.emit(line)
         ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
 
     @staticmethod
