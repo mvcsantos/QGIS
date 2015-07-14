@@ -65,6 +65,7 @@ import time
 class AlgorithmDialog(AlgorithmDialogBase):
     
     algExecutor = None
+    workerThread = None
 
     def __init__(self, alg):
         AlgorithmDialogBase.__init__(self, alg)
@@ -168,7 +169,7 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 return
             self.btnRun.setEnabled(False)
             self.btnClose.setEnabled(False)
-            self.btnCancel.setEnabled(True)
+            #self.btnCancel.setEnabled(True)
             
             buttons = self.mainWidget.iterateButtons
             self.iterateParam = None
@@ -215,25 +216,31 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 self.alg.setConsoleInfo.connect(self.setConsoleInfo)
                 self.alg.setInfo.connect(self.setInfo)
                 
-                objThread = QThread()
-                objThread.setTerminationEnabled(True)
+                AlgorithmDialog.workerThread = QThread()
+                AlgorithmDialog.workerThread.setTerminationEnabled(True)
                 
                 # Button to quit the thread
-                self.btnCancel.clicked.connect(objThread.terminate)
-                objThread.terminated.connect(self.quitAlgExecution)
+                self.btnCancel.clicked.connect(self.quitAlgExecution)
+                #AlgorithmDialog.workerThread.terminated.connect(self.quitAlgExecution)
+                
                 
                 AlgorithmDialog.algExecutor = AlgorithmExecutor(self.alg, self)
-                AlgorithmDialog.algExecutor.moveToThread(objThread)
-                objThread.started.connect(AlgorithmDialog.algExecutor.runalg)
+                AlgorithmDialog.algExecutor.moveToThread(AlgorithmDialog.workerThread)
+                AlgorithmDialog.workerThread.started.connect(AlgorithmDialog.algExecutor.runalg)
                 #AlgorithmDialog.algExecutor.setResult.connect(self.setAlgExeResult)
                 
                 self.algExecutor.finished.connect(self.postProcess)
-                self.algExecutor.finished.connect(objThread.quit)
+                self.algExecutor.finished.connect(AlgorithmDialog.workerThread.exit)
                 
                 try:
-                    self.setInfo('Algorithm %s starting' % self.alg.name)
-                    objThread.start()
-                    time.sleep(1) 
+                    
+                    AlgorithmDialog.workerThread.start()
+                    #objThread.terminate()
+                    #self.algExecutor.finished.emit(False)
+                    #ProcessingLog.addToLog("Quitting thread!", ProcessingLog.LOG_INFO)
+                    #QApplication.restoreOverrideCursor()
+                    #self.resetGUI()
+                    #time.sleep(1) 
                 except Exception, e:
                     ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
                 # ----------------------------------
@@ -282,6 +289,10 @@ class AlgorithmDialog(AlgorithmDialogBase):
             self.resetGUI()
         
     def quitAlgExecution(self):
-        ProcessingLog.addToLog("Quitting thread!", ProcessingLog.LOG_INFO)
+        self.setInfo(self.tr('<b>Interrupting algorithm execution...</b>'))
+        QApplication.restoreOverrideCursor()
+        AlgorithmDialog.workerThread.quit()
+        AlgorithmDialog.workerThread.wait()
+        self.finish()
         
         

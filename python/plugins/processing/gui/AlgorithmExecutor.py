@@ -7,6 +7,7 @@ from processing.tools import dataobjects
 from processing.tools.system import getTempFilename
 from processing.tools import vector
 from processing.gui.SilentProgress import SilentProgress
+import time
 
 # processing.runalg('qgis:creategrid', 0, "0,1,0,1", 0.1, 0.1, "EPSG:4326", None)
 
@@ -30,6 +31,7 @@ class AlgorithmExecutor(QObject):
         could not be completed.
         """
         try:
+            time.sleep(1)
             self.alg.execute()
             self.finished.emit(True)
         except Exception, e:
