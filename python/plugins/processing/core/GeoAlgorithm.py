@@ -205,6 +205,21 @@ class GeoAlgorithm(QObject):
         """
         return None
 
+    def _checkParameterValuesBeforeExecuting(self):
+        for param in self.parameters:
+            if isinstance(param, (ParameterRaster, ParameterVector,
+                          ParameterMultipleInput)):
+                if param.value:
+                    if isinstance(param, ParameterMultipleInput):
+                        inputlayers = param.value.split(';')
+                    else:
+                        inputlayers = [param.value]
+                    for inputlayer in inputlayers:
+                        obj = dataobjects.getObject(inputlayer)
+                        if obj is None:
+                            return "Wrong parameter value: " + param.value
+        return self.checkParameterValuesBeforeExecuting()
+
     def checkParameterValuesBeforeExecuting(self):
         """If there is any check to do before launching the execution
         of the algorithm, it should be done here.
