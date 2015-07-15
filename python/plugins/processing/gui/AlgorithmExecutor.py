@@ -31,7 +31,6 @@ class AlgorithmExecutor(QObject):
         could not be completed.
         """
         try:
-            time.sleep(1)
             self.alg.execute()
             self.finished.emit(True)
         except Exception, e:

@@ -386,7 +386,7 @@ class Processing(QObject):
             objThread.start()
         except Exception, e:
             ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
-        #time.sleep(1)
+        time.sleep(1)
         
         return None
        
