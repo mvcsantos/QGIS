@@ -42,7 +42,7 @@ class Polygonize(GeoAlgorithm):
     FIELDS = 'FIELDS'
     GEOMETRY = 'GEOMETRY'
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         try:
             from shapely.ops import polygonize
             from shapely.geometry import Point, MultiLineString
@@ -73,8 +73,8 @@ class Polygonize(GeoAlgorithm):
             else:
                 allLinesList.append(inGeom.asPolyline())
             current += 1
-            progress.setPercentage(int(current * total))
-        progress.setPercentage(40)
+            self.progress.emit(int(current * total))
+        self.progress.emit(40)
         allLines = MultiLineString(allLinesList)
         progress.setInfo(self.tr('Noding lines...'))
         try:
@@ -82,12 +82,12 @@ class Polygonize(GeoAlgorithm):
             allLines = unary_union(allLines)
         except ImportError:
             allLines = allLines.union(Point(0, 0))
-        progress.setPercentage(45)
+        self.progress.emit(45)
         progress.setInfo(self.tr('Polygonizing...'))
         polygons = list(polygonize([allLines]))
         if not polygons:
             raise GeoAlgorithmExecutionException(self.tr('No polygons were created!'))
-        progress.setPercentage(50)
+        self.progress.emit(50)
         progress.setInfo('Saving polygons...')
         writer = output.getVectorWriter(fields, QGis.WKBPolygon, vlayer.crs())
         outFeat = QgsFeature()
@@ -100,7 +100,7 @@ class Polygonize(GeoAlgorithm):
                                       polygon.length])
             writer.addFeature(outFeat)
             current += 1
-            progress.setPercentage(50 + int(current * total))
+            self.progress.emit(50 + int(current * total))
         progress.setInfo(self.tr('Finished'))
         del writer
 

@@ -51,7 +51,7 @@ class Delaunay(GeoAlgorithm):
         self.addOutput(OutputVector(self.OUTPUT,
             self.tr('Delaunay triangulation')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT))
 
@@ -112,6 +112,6 @@ class Delaunay(GeoAlgorithm):
             feat.setGeometry(geometry)
             writer.addFeature(feat)
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer

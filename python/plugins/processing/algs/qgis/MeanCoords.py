@@ -57,7 +57,7 @@ class MeanCoords(GeoAlgorithm):
 
         self.addOutput(OutputVector(MeanCoords.OUTPUT, self.tr('Mean coordinates')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.POINTS))
         weightField = self.getParameterValue(self.WEIGHT)
         uniqueField = self.getParameterValue(self.UID)
@@ -87,7 +87,7 @@ class MeanCoords(GeoAlgorithm):
         means = {}
         for feat in features:
             current += 1
-            progress.setPercentage(current * total)
+            self.progress.emit(current * total)
             if uniqueIndex == -1:
                 clazz = "Single class"
             else:

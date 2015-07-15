@@ -52,7 +52,7 @@ class ExtentFromLayer(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Extent')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT_LAYER))
         byFeature = self.getParameterValue(self.BY_FEATURE)
@@ -74,13 +74,13 @@ class ExtentFromLayer(GeoAlgorithm):
                 QGis.WKBPolygon, layer.crs())
 
         if byFeature:
-            self.featureExtent(layer, writer, progress)
+            self.featureExtent(layer, writer)
         else:
-            self.layerExtent(layer, writer, progress)
+            self.layerExtent(layer, writer)
 
         del writer
 
-    def layerExtent(self, layer, writer, progress):
+    def layerExtent(self, layer, writer):
         rect = layer.extent()
         minx = rect.xMinimum()
         miny = rect.yMinimum()
@@ -113,7 +113,7 @@ class ExtentFromLayer(GeoAlgorithm):
         feat.setAttributes(attrs)
         writer.addFeature(feat)
 
-    def featureExtent(self, layer, writer, progress):
+    def featureExtent(self, layer, writer):
         current = 0
         features = vector.features(layer)
         total = 100.0 / float(len(features))
@@ -151,4 +151,4 @@ class ExtentFromLayer(GeoAlgorithm):
 
             writer.addFeature(feat)
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))

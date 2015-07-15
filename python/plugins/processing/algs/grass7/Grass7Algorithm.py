@@ -68,6 +68,11 @@ class Grass7Algorithm(GeoAlgorithm):
         self.defineCharacteristicsFromFile()
         self.numExportedLayers = 0
 
+        # GRASS GIS 7 console output, needed to do postprocessing in case GRASS
+        # dumps results to the console
+        self.consoleOutput = []
+        self.grass7Utils = Grass7Utils(parent=self)
+
     def getCopy(self):
         newone = Grass7Algorithm(self.descriptionFile)
         newone.provider = self.provider
@@ -196,7 +201,7 @@ class Grass7Algorithm(GeoAlgorithm):
             cellsize = 100
         return cellsize
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         if system.isWindows():
             path = Grass7Utils.grassPath()
             if path == '':
@@ -417,10 +422,12 @@ class Grass7Algorithm(GeoAlgorithm):
         loglines = []
         loglines.append(self.tr('GRASS GIS 7 execution commands'))
         for line in commands:
-            progress.setCommand(line)
+            self.setCommand.emit(line)
             loglines.append(line)
         if ProcessingConfig.getSetting(Grass7Utils.GRASS_LOG_COMMANDS):
             ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
+        self.consoleOutput = self.grass7Utils.executeGrass7(commands, outputCommands)
+        self.postProcessResults()
 
         for out in self.outputs:
             if isinstance(out, OutputHTML):

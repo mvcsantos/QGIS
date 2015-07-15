@@ -53,7 +53,7 @@ class Difference(GeoAlgorithm):
             self.tr('Difference layer'), [ParameterVector.VECTOR_TYPE_ANY]))
         self.addOutput(OutputVector(Difference.OUTPUT, self.tr('Difference')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layerA = dataobjects.getObjectFromUri(
             self.getParameterValue(Difference.INPUT))
         layerB = dataobjects.getObjectFromUri(
@@ -111,7 +111,7 @@ class Difference(GeoAlgorithm):
                     continue
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer
 

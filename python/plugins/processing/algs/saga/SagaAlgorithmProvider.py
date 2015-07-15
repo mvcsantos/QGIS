@@ -34,7 +34,7 @@ from SagaAlgorithm212 import SagaAlgorithm212
 from SagaAlgorithm213 import SagaAlgorithm213
 from SagaAlgorithm214 import SagaAlgorithm214
 from SplitRGBBands import SplitRGBBands
-import SagaUtils
+from processing.algs.saga.SagaUtils import SagaUtils
 from processing.tools.system import isWindows, isMac
 
 pluginPath = os.path.normpath(os.path.join(
@@ -52,6 +52,7 @@ class SagaAlgorithmProvider(AlgorithmProvider):
     def __init__(self):
         AlgorithmProvider.__init__(self)
         self.activate = True
+        self.sagaUtils = SagaUtils()
 
     def initializeSettings(self):
         if isWindows() or isMac():
@@ -81,7 +82,7 @@ class SagaAlgorithmProvider(AlgorithmProvider):
 
     def _loadAlgorithms(self):
         self.algs = []
-        version = SagaUtils.getSagaInstalledVersion(True)
+        version = self.sagaUtils.getSagaInstalledVersion(True)
         if version is None:
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR,
                 self.tr('Problem with SAGA installation: SAGA was not found or is not correctly installed'))
@@ -91,8 +92,8 @@ class SagaAlgorithmProvider(AlgorithmProvider):
                 self.tr('Problem with SAGA installation: installed SAGA version (%s) is not supported' % version))
             return
 
-        folder = SagaUtils.sagaDescriptionPath()
-        folder = os.path.join(folder, self.supportedVersions[version][0])
+        folder = self.sagaUtils.sagaDescriptionPath()
+        folder = os.path.join(folder, self.supportedVersions[self.sagaUtils.getSagaInstalledVersion()][0])
         for descriptionFile in os.listdir(folder):
             if descriptionFile.endswith('txt'):
                 f = os.path.join(folder, descriptionFile)
@@ -101,7 +102,7 @@ class SagaAlgorithmProvider(AlgorithmProvider):
 
     def _loadAlgorithm(self, descriptionFile):
         try:
-            alg = self.supportedVersions[SagaUtils.getSagaInstalledVersion()][1](descriptionFile)
+            alg = self.supportedVersions[self.sagaUtils.getSagaInstalledVersion()][1](descriptionFile)
             if alg.name.strip() != '':
                 self.algs.append(alg)
             else:
@@ -112,7 +113,7 @@ class SagaAlgorithmProvider(AlgorithmProvider):
                 self.tr('Could not open SAGA algorithm: %s\n%s' % (descriptionFile, str(e))))
 
     def getDescription(self):
-        version = SagaUtils.getSagaInstalledVersion()
+        version = self.sagaUtils.getSagaInstalledVersion()
         return 'SAGA (%s)' %  version if version is not None else 'SAGA'
 
     def getName(self):

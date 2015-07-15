@@ -47,7 +47,7 @@ class Intersection(GeoAlgorithm):
     INPUT2 = 'INPUT2'
     OUTPUT = 'OUTPUT'
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         vlayerA = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT))
         vlayerB = dataobjects.getObjectFromUri(
@@ -66,7 +66,7 @@ class Intersection(GeoAlgorithm):
         nFeat = len(selectionA)
         for inFeatA in selectionA:
             nElement += 1
-            progress.setPercentage(nElement / float(nFeat) * 100)
+            self.progress.emit(nElement / float(nFeat) * 100)
             geom = QgsGeometry(inFeatA.geometry())
             atMapA = inFeatA.attributes()
             intersects = index.intersects(geom.boundingBox())

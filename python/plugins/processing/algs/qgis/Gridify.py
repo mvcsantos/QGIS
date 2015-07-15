@@ -54,7 +54,7 @@ class Gridify(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Snapped')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT))
         hSpacing = self.getParameterValue(self.HSPACING)
         vSpacing = self.getParameterValue(self.VSPACING)
@@ -139,7 +139,7 @@ class Gridify(GeoAlgorithm):
                 feat.setAttributes(f.attributes())
                 writer.addFeature(feat)
 
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))
 
         del writer
 

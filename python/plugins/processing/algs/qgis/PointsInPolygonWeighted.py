@@ -63,7 +63,7 @@ class PointsInPolygonWeighted(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Weighted count')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         polyLayer = dataobjects.getObjectFromUri(self.getParameterValue(self.POLYGONS))
         pointLayer = dataobjects.getObjectFromUri(self.getParameterValue(self.POINTS))
         fieldName = self.getParameterValue(self.FIELD)
@@ -123,6 +123,6 @@ class PointsInPolygonWeighted(GeoAlgorithm):
             writer.addFeature(outFeat)
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer

@@ -68,7 +68,7 @@ class ExtractByAttribute(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Extracted (attribute)')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT))
         fieldName = self.getParameterValue(self.FIELD)
         operator = self.OPERATORS[self.getParameterValue(self.OPERATOR)]
@@ -87,22 +87,22 @@ class ExtractByAttribute(GeoAlgorithm):
                 self.tr('Operators %s can be used only with string fields.' % op))
 
         if fieldType in [QVariant.Int, QVariant.Double]:
-            progress.setInfo(self.tr('Numeric field'))
+            self.setInfo.emit(self.tr('Numeric field'))
             expr = '"%s" %s %s' % (fieldName, operator, value)
-            progress.setInfo(expr)
+            self.setInfo.emit(expr)
         elif fieldType == QVariant.String:
-            progress.setInfo(self.tr('String field'))
+            self.setInfo.emit(self.tr('String field'))
             if operator not in self.OPERATORS[-2:]:
                 expr = """"%s" %s '%s'""" % (fieldName, operator, value)
             elif operator == 'begins with':
                 expr = """"%s" LIKE '%s%%'""" % (fieldName, value)
             elif operator == 'contains':
                 expr = """"%s" LIKE '%%%s%%'""" % (fieldName, value)
-            progress.setInfo(expr)
+            self.setInfo.emit(expr)
         elif fieldType in [QVariant.Date, QVariant.DateTime]:
-            progress.setInfo(self.tr('Date field'))
+            self.setInfo.emit(self.tr('Date field'))
             expr = """"%s" %s '%s'""" % (fieldName, operator, value)
-            progress.setInfo(expr)
+            self.setInfo.emit(expr)
         else:
             raise GeoAlgorithmExecutionException(
                 self.tr('Unsupported field type "%s"' % fields[idx].typeName()))
@@ -117,6 +117,6 @@ class ExtractByAttribute(GeoAlgorithm):
         for count, f in enumerate(features):
             if expression.evaluate(f, fields):
                 writer.addFeature(f)
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))
 
         del writer

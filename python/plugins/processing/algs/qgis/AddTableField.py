@@ -65,7 +65,7 @@ class AddTableField(GeoAlgorithm):
         self.addOutput(OutputVector(
             self.OUTPUT_LAYER, self.tr('Added')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         fieldType = self.getParameterValue(self.FIELD_TYPE)
         fieldName = self.getParameterValue(self.FIELD_NAME)
         fieldLength = self.getParameterValue(self.FIELD_LENGTH)
@@ -87,7 +87,7 @@ class AddTableField(GeoAlgorithm):
         features = vector.features(layer)
         nFeat = len(features)
         for inFeat in features:
-            progress.setPercentage(int(100 * nElement / nFeat))
+            self.progress.emit(int(100 * nElement / nFeat))
             nElement += 1
             inGeom = inFeat.geometry()
             outFeat.setGeometry(inGeom)

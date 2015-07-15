@@ -82,7 +82,7 @@ class Eliminate(GeoAlgorithm):
             self.MODES))
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Cleaned')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         inLayer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT))
         boundary = self.getParameterValue(self.MODE) == self.MODE_BOUNDARY
         smallestArea = self.getParameterValue(self.MODE) == self.MODE_SMALLEST_AREA
@@ -213,7 +213,7 @@ class Eliminate(GeoAlgorithm):
         else:
             start = 100
 
-        progress.setPercentage(start)
+        self.progress.emit(start)
         madeProgress = True
 
         # We go through the list and see if we find any polygons we can
@@ -289,7 +289,7 @@ class Eliminate(GeoAlgorithm):
                             self.tr('Could not replace geometry of feature with id %s' % mergeWithFid))
 
                     start = start + add
-                    progress.setPercentage(start)
+                    self.progress.emit(start)
                 else:
                     featNotEliminated.append(feat)
 

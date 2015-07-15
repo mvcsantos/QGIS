@@ -37,7 +37,7 @@ class Explode(GeoAlgorithm):
     INPUT = 'INPUT'
     OUTPUT = 'OUTPUT'
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         vlayer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT))
         output = self.getOutputFromName(self.OUTPUT)
@@ -52,7 +52,7 @@ class Explode(GeoAlgorithm):
         nFeat = len(features)
         for feature in features:
             nElement += 1
-            progress.setPercentage(nElement * 100 / nFeat)
+            self.progress.emit(nElement * 100 / nFeat)
             inGeom = feature.geometry()
             atMap = feature.attributes()
             segments = self.extractAsSingleSegments(inGeom)

@@ -42,7 +42,7 @@ class PointsLayerFromTable(GeoAlgorithm):
     OUTPUT = 'OUTPUT'
     TARGET_CRS = 'TARGET_CRS'
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         source = self.getParameterValue(self.INPUT)
         vlayer = dataobjects.getObjectFromUri(source)
         output = self.getOutputFromName(self.OUTPUT)
@@ -63,7 +63,7 @@ class PointsLayerFromTable(GeoAlgorithm):
         nFeat = len(features)
         for feature in features:
             nElement += 1
-            progress.setPercentage(nElement * 100 / nFeat)
+            self.progress.emit(nElement * 100 / nFeat)
             attrs = feature.attributes()
             try:
                 x = float(attrs[xfieldindex])

@@ -50,7 +50,7 @@ class SinglePartsToMultiparts(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Multipart')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT))
         fieldName = self.getParameterValue(self.FIELD)
 
@@ -89,7 +89,7 @@ class SinglePartsToMultiparts(GeoAlgorithm):
                         multi_feature.extend(feature_list)
 
                     current += 1
-                    progress.setPercentage(int(current * total))
+                    self.progress.emit(int(current * total))
 
                 outFeat.setAttributes(attrs)
                 outGeom = QgsGeometry(self.convertGeometry(multi_feature,

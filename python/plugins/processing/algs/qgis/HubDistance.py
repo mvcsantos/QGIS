@@ -74,7 +74,7 @@ class HubDistance(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Hub distance')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layerPoints = dataobjects.getObjectFromUri(
             self.getParameterValue(self.POINTS))
         layerHubs = dataobjects.getObjectFromUri(
@@ -150,7 +150,7 @@ class HubDistance(GeoAlgorithm):
                 feat.setGeometry(QgsGeometry.fromPolyline([src, closest.point]))
 
             writer.addFeature(feat)
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))
 
         del writer
 

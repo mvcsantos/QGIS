@@ -43,7 +43,7 @@ class DeleteHoles(GeoAlgorithm):
             self.tr('Input layer'), [ParameterVector.VECTOR_TYPE_POLYGON]))
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Cleaned')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT))
 
@@ -76,6 +76,6 @@ class DeleteHoles(GeoAlgorithm):
             feat.setGeometry(geometry)
             feat.setAttributes(f.attributes())
             writer.addFeature(feat)
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))
 
         del writer

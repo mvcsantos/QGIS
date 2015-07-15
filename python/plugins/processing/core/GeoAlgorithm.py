@@ -16,7 +16,7 @@
 *                                                                         *
 ***************************************************************************
 """
-
+from __builtin__ import str
 
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
@@ -32,7 +32,7 @@ import subprocess
 import copy
 
 from PyQt4.QtGui import QIcon
-from PyQt4.QtCore import QCoreApplication, QSettings
+from PyQt4.QtCore import QCoreApplication, QObject, pyqtSignal
 from qgis.core import QGis, QgsRasterFileWriter
 
 from processing.core.ProcessingLog import ProcessingLog
@@ -45,11 +45,20 @@ from processing.tools import dataobjects, vector
 from processing.tools.system import setTempOutput
 
 
-class GeoAlgorithm:
+class GeoAlgorithm(QObject):
 
     _icon = QIcon(os.path.dirname(__file__) + '/../images/alg.png')
+    
+    progress = pyqtSignal(int)
+    setText = pyqtSignal(str)
+    setInfo = pyqtSignal(str)
+    setCommand = pyqtSignal(str)
+    setConsoleInfo = pyqtSignal(str)
 
     def __init__(self):
+        # Call QObject init method
+        QObject.__init__(self, None)
+        
         # Parameters needed by the algorithm
         self.parameters = list()
 
@@ -91,7 +100,9 @@ class GeoAlgorithm:
         """Returns a new instance of this algorithm, ready to be used
         for being executed.
         """
-        newone = copy.copy(self)
+        newone = GeoAlgorithm()
+        newone.__class__ = self.__class__
+        newone.__dict__ = self.__dict__
         newone.parameters = copy.deepcopy(self.parameters)
         newone.outputs = copy.deepcopy(self.outputs)
         return newone
@@ -208,7 +219,7 @@ class GeoAlgorithm:
 
     # =========================================================
 
-    def execute(self, progress=None, model=None):
+    def execute(self, model=None):
         """The method to use to call a processing algorithm.
 
         Although the body of the algorithm is in processAlgorithm(),
@@ -224,11 +235,11 @@ class GeoAlgorithm:
             self.resolveTemporaryOutputs()
             self.resolveDataObjects()
             self.checkOutputFileExtensions()
-            self.runPreExecutionScript(progress)
-            self.processAlgorithm(progress)
-            progress.setPercentage(100)
-            self.convertUnsupportedFormats(progress)
-            self.runPostExecutionScript(progress)
+            self.runPreExecutionScript()
+            self.processAlgorithm()
+            self.progress.emit(100)
+            self.convertUnsupportedFormats()
+            self.runPostExecutionScript()
         except GeoAlgorithmExecutionException, gaee:
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, gaee.msg)
             raise gaee
@@ -247,38 +258,23 @@ class GeoAlgorithm:
             raise GeoAlgorithmExecutionException(
                 str(e) + self.tr('\nSee log for more details'))
 
-    def _checkParameterValuesBeforeExecuting(self):
-        for param in self.parameters:
-            if isinstance(param, (ParameterRaster, ParameterVector,
-                          ParameterMultipleInput)):
-                if param.value:
-                    if isinstance(param, ParameterMultipleInput):
-                        inputlayers = param.value.split(';')
-                    else:
-                        inputlayers = [param.value]
-                    for inputlayer in inputlayers:
-                        obj = dataobjects.getObject(inputlayer)
-                        if obj is None:
-                            return "Wrong parameter value: " + param.value
-        return self.checkParameterValuesBeforeExecuting()
-
-    def runPostExecutionScript(self, progress):
+    def runPostExecutionScript(self):
         scriptFile = ProcessingConfig.getSetting(
             ProcessingConfig.POST_EXECUTION_SCRIPT)
-        self.runHookScript(scriptFile, progress)
+        self.runHookScript(scriptFile)
 
-    def runPreExecutionScript(self, progress):
+    def runPreExecutionScript(self):
         scriptFile = ProcessingConfig.getSetting(
             ProcessingConfig.PRE_EXECUTION_SCRIPT)
-        self.runHookScript(scriptFile, progress)
+        self.runHookScript(scriptFile)
 
-    def runHookScript(self, filename, progress):
+    def runHookScript(self, filename):
         if filename is None or not os.path.exists(filename):
             return
         try:
             script = 'import processing\n'
             ns = {}
-            ns['progress'] = progress
+            #ns['progress'] = progress
             ns['alg'] = self
             f = open(filename)
             lines = f.readlines()
@@ -290,9 +286,10 @@ class GeoAlgorithm:
             # all exceptions
             pass
 
-    def convertUnsupportedFormats(self, progress):
+    def convertUnsupportedFormats(self):
         i = 0
-        progress.setText(self.tr('Converting outputs'))
+        #progress.setText()
+        self.setText.emit(self.tr('Converting outputs'))
         for out in self.outputs:
             if isinstance(out, OutputVector):
                 if out.compatible is not None:
@@ -346,7 +343,7 @@ class GeoAlgorithm:
                     features = vector.features(layer)
                     for feature in features:
                         writer.addRecord(feature)
-            progress.setPercentage(100 * i / float(len(self.outputs)))
+            self.progress.emit(100 * i / float(len(self.outputs)))
 
     def getFormatShortNameFromFilename(self, filename):
         ext = filename[filename.rfind('.') + 1:]
@@ -438,7 +435,6 @@ class GeoAlgorithm:
                                 inputlayers[i] = layer.source()
                                 break
                     param.setValue(",".join(inputlayers))
-
 
     def checkInputCRS(self):
         """It checks that all input layers use the same CRS. If so,

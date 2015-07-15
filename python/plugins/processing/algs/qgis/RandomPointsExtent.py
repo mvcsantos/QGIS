@@ -57,7 +57,7 @@ class RandomPointsExtent(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Random points')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         pointCount = int(self.getParameterValue(self.POINT_NUMBER))
         minDistance = float(self.getParameterValue(self.MIN_DISTANCE))
         extent = str(self.getParameterValue(self.EXTENT)).split(',')
@@ -102,7 +102,7 @@ class RandomPointsExtent(GeoAlgorithm):
                 index.insertFeature(f)
                 points[nPoints] = pnt
                 nPoints += 1
-                progress.setPercentage(int(nPoints * total))
+                self.progress.emit(int(nPoints * total))
             nIterations += 1
 
         if nPoints < pointCount:

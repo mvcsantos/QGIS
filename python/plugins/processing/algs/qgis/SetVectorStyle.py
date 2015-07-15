@@ -50,7 +50,7 @@ class SetVectorStyle(GeoAlgorithm):
             self.tr('Style file'), False, False, 'qml'))
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Styled'), True))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         filename = self.getParameterValue(self.INPUT)
         layer = dataobjects.getObjectFromUri(filename)
 

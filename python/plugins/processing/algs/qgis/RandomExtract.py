@@ -59,7 +59,7 @@ class RandomExtract(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Extracted (random)')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         filename = self.getParameterValue(self.INPUT)
         layer = dataobjects.getObjectFromUri(filename)
         method = self.getParameterValue(self.METHOD)
@@ -88,5 +88,5 @@ class RandomExtract(GeoAlgorithm):
         for (i, feat) in enumerate(features):
             if i in selran:
                 writer.addFeature(feat)
-            progress.setPercentage(100 * i / float(featureCount))
+            self.progress.emit(100 * i / float(featureCount))
         del writer

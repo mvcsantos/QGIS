@@ -76,7 +76,7 @@ class BasicStatisticsNumbers(GeoAlgorithm):
         self.addOutput(OutputNumber(self.UNIQUE, self.tr('Number of unique values')))
         self.addOutput(OutputNumber(self.STD_DEV, self.tr('Standard deviation')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT_LAYER))
         fieldName = self.getParameterValue(self.FIELD_NAME)
@@ -117,7 +117,7 @@ class BasicStatisticsNumbers(GeoAlgorithm):
                 sumValue += value
 
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         # Calculate additional values
         rValue = maxValue - minValue

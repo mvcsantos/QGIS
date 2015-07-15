@@ -35,7 +35,7 @@ from qgis.gui import QgsEncodingFileDialog
 
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.ProcessingLog import ProcessingLog
-from processing.gui.AlgorithmExecutor import runalg
+from processing.gui.AlgorithmExecutor import AlgorithmExecutor
 from processing.tools import dataobjects
 from processing.gui.Postprocessing import handleAlgorithmResults
 

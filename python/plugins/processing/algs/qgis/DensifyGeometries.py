@@ -53,7 +53,7 @@ class DensifyGeometries(GeoAlgorithm):
         self.addOutput(OutputVector(self.OUTPUT,
             self.tr('Densified')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.INPUT))
         vertices = self.getParameterValue(self.VERTICES)
@@ -77,7 +77,7 @@ class DensifyGeometries(GeoAlgorithm):
             feature.setAttributes(attrs)
             writer.addFeature(feature)
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer
 

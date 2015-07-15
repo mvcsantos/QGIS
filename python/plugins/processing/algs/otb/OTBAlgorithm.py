@@ -63,6 +63,7 @@ class OTBAlgorithm(GeoAlgorithm):
         self.defineCharacteristicsFromFile()
         self.numExportedLayers = 0
         self.hasROI = None
+        self.otbUtils = OTBUtils(parent=self)
 
 
     def __str__(self):
@@ -172,7 +173,7 @@ class OTBAlgorithm(GeoAlgorithm):
                     self.tr('Could not open OTB algorithm: %s\n%s' % (self.descriptionFile, line)))
                 raise e
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         currentOs = os.name
 
         path = OTBUtils.otbPath()
@@ -305,8 +306,8 @@ class OTBAlgorithm(GeoAlgorithm):
                 "-sizey",    str(sizeY)
             ]
             ProcessingLog.addToLog(ProcessingLog.LOG_INFO, helperCommands)
-            progress.setCommand(helperCommands)
-            OTBUtils.executeOtb(helperCommands, progress)
+            self.setCommand.emit(helperCommands)
+            self.otbUtils.executeOtb(helperCommands)
 
         if self.roiRasters:
             supportRaster = self.roiRasters.itervalues().next()
@@ -318,14 +319,14 @@ class OTBAlgorithm(GeoAlgorithm):
                     "-io.out",          roiFile,
                     "-elev.dem.path",   OTBUtils.otbSRTMPath()]
                 ProcessingLog.addToLog(ProcessingLog.LOG_INFO, helperCommands)
-                progress.setCommand(helperCommands)
-                OTBUtils.executeOtb(helperCommands, progress)
+                self.setCommand.emit(helperCommands)
+                self.otbUtils.executeOtb(helperCommands)
 
         loglines = []
         loglines.append(self.tr('OTB execution command'))
         for line in commands:
             loglines.append(line)
-            progress.setCommand(line)
+            self.setCommand.emit(line)
 
         ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
         import processing.algs.otb.OTBSpecific_XMLLoading
@@ -352,4 +353,4 @@ class OTBAlgorithm(GeoAlgorithm):
         #    frame,filename,line_number,function_name,lines,index = a_frame
         #    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "%s %s %s %s %s %s" % (frame,filename,line_number,function_name,lines,index))
 
-        OTBUtils.executeOtb(commands, progress)
+        self.otbUtils.executeOtb(commands)

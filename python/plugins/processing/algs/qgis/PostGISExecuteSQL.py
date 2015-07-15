@@ -38,7 +38,7 @@ class PostGISExecuteSQL(GeoAlgorithm):
     DATABASE = 'DATABASE'
     SQL = 'SQL'
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         connection = self.getParameterValue(self.DATABASE)
         settings = QSettings()
         mySettings = '/PostgreSQL/connections/' + connection

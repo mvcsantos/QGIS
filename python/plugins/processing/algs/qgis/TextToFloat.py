@@ -50,7 +50,7 @@ class TextToFloat(GeoAlgorithm):
             self.INPUT, ParameterTableField.DATA_TYPE_STRING))
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Float from text')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT))
         fieldName = self.getParameterValue(self.FIELD)
         idx = layer.fieldNameIndex(fieldName)
@@ -76,6 +76,6 @@ class TextToFloat(GeoAlgorithm):
                 f[idx] = None
 
             writer.addFeature(f)
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))
 
         del writer

@@ -31,7 +31,7 @@ from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.parameters import ParameterRaster
 from processing.core.outputs import OutputRaster
 from processing.tools.system import getTempFilename, isWindows
-import SagaUtils
+from processing.algs.saga.SagaUtils import SagaUtils
 
 pluginPath = os.path.normpath(os.path.join(
     os.path.split(os.path.dirname(__file__))[0], os.pardir))
@@ -43,6 +43,11 @@ class SplitRGBBands(GeoAlgorithm):
     R = 'R'
     G = 'G'
     B = 'B'
+
+    def __init__(self):
+        super(SplitRGBBands, self).__init__()
+        self.sagaUtils = SagaUtils(parent=self)
+        
 
     def getIcon(self):
         return QtGui.QIcon(os.path.join(pluginPath, 'images', 'saga.png'))
@@ -59,7 +64,7 @@ class SplitRGBBands(GeoAlgorithm):
         self.addOutput(OutputRaster(SplitRGBBands.B,
             self.tr('Output B band layer')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         # TODO: check correct num of bands
         input = self.getParameterValue(SplitRGBBands.INPUT)
         temp = getTempFilename(None).replace('.', '')
@@ -73,7 +78,7 @@ class SplitRGBBands(GeoAlgorithm):
         g = self.getOutputValue(SplitRGBBands.G)
         b = self.getOutputValue(SplitRGBBands.B)
         commands = []
-        version = SagaUtils.getSagaInstalledVersion(True)
+        version = self.sagaUtils.getSagaInstalledVersion(True)
         trailing = ""
         lib = ""
         commands.append('%sio_gdal 0 -GRIDS "%s" -FILES "%s"' % (lib, temp, input)
@@ -86,5 +91,5 @@ class SplitRGBBands(GeoAlgorithm):
                         )
 
 
-        SagaUtils.createSagaBatchJobFileFromSagaCommands(commands)
-        SagaUtils.executeSaga(progress)
+        self.sagaUtils.createSagaBatchJobFileFromSagaCommands(commands)
+        self.sagaUtils.executeSaga()

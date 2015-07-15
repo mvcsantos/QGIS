@@ -83,7 +83,7 @@ class Datasources2Vrt(GeoAlgorithm):
                                     self.tr('Virtual string')))
 
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         """Here is where the processing itself takes place."""
 
         # The first thing to do is retrieve the values of the parameters
@@ -116,8 +116,7 @@ class Datasources2Vrt(GeoAlgorithm):
         outVrtString = mergeDataSources2Vrt(data_sources=ds, 
                                            outfile=outVrtPath,
                                            relative=False,
-                                           schema=False,
-                                           progress=progress)
+                                           schema=False)
         
         # setting out values
         self.setOutputValue(self.OUTPUT_VRT_STRING, outVrtString)
@@ -131,8 +130,7 @@ class Datasources2Vrt(GeoAlgorithm):
 def mergeDataSources2Vrt(data_sources=[],
                           outfile=None,
                           relative=False,
-                          schema=False,
-                          progress=None): # progress is pased because of avoid interferences with GeoAlgorithm
+                          schema=False): # progress is pased because of avoid interferences with GeoAlgorithm
     '''Function to do the work of merging datasources in a single vrt format
     
     @param data_sources: Array of path strings
@@ -152,7 +150,7 @@ def mergeDataSources2Vrt(data_sources=[],
     #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     # for each file Open the datasource to read.
     for i, infile in  enumerate(data_sources):
-        progress.setPercentage(int(100 * i / len(data_sources)))
+        self.progress.emit(int(100 * i / len(data_sources)))
         
         src_ds = ogr.Open(infile, update=0)
     

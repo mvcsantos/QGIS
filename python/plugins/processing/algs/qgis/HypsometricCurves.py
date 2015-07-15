@@ -69,7 +69,7 @@ class HypsometricCurves(GeoAlgorithm):
         self.addOutput(OutputDirectory(self.OUTPUT_DIRECTORY,
             self.tr('Hypsometric curves')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         rasterPath = self.getParameterValue(self.INPUT_DEM)
         layer = dataobjects.getObjectFromUri(
             self.getParameterValue(self.BOUNDARY_LAYER))
@@ -166,16 +166,16 @@ class HypsometricCurves(GeoAlgorithm):
                 mask=numpy.logical_or(srcArray == noData,
                     numpy.logical_not(rasterizedArray)))
 
-            self.calculateHypsometry(f.id(), fName, progress, masked,
+            self.calculateHypsometry(f.id(), fName, masked,
                 cellXSize, cellYSize, percentage, step)
 
             memVDS = None
             rasterizedDS = None
-            progress.setPercentage(int(count * total))
+            self.progress.emit(int(count * total))
 
         rasterDS = None
 
-    def calculateHypsometry(self, fid, fName, progress, data, pX, pY,
+    def calculateHypsometry(self, fid, fName, data, pX, pY,
                             percentage, step):
         out = dict()
         d = data.compressed()

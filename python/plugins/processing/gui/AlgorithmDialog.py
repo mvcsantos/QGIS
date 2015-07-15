@@ -16,6 +16,7 @@
 *                                                                         *
 ***************************************************************************
 """
+from findertools import sleep
 
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
@@ -25,7 +26,7 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, QThread, pyqtSlot
 from PyQt4.QtGui import QMessageBox, QApplication, QCursor, QColor, QPalette
 
 from processing.core.ProcessingLog import ProcessingLog
@@ -33,7 +34,7 @@ from processing.core.ProcessingConfig import ProcessingConfig
 
 from processing.gui.ParametersPanel import ParametersPanel
 from processing.gui.AlgorithmDialogBase import AlgorithmDialogBase
-from processing.gui.AlgorithmExecutor import runalg, runalgIterating
+from processing.gui.AlgorithmExecutor import AlgorithmExecutor
 from processing.gui.Postprocessing import handleAlgorithmResults
 
 from processing.core.parameters import ParameterExtent
@@ -58,8 +59,13 @@ from processing.core.outputs import OutputTable
 
 from processing.tools import dataobjects
 
+from processing.algs.qgis.Grid import Grid
+import time
 
 class AlgorithmDialog(AlgorithmDialogBase):
+    
+    algExecutor = None
+    workerThread = None
 
     def __init__(self, alg):
         AlgorithmDialogBase.__init__(self, alg)
@@ -68,6 +74,8 @@ class AlgorithmDialog(AlgorithmDialogBase):
 
         self.mainWidget = ParametersPanel(self, alg)
         self.setMainWidget()
+        self.algExecResult = None
+        self.notFinished = True
 
     def setParamValues(self):
         params = self.alg.parameters
@@ -163,6 +171,8 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 return
             self.btnRun.setEnabled(False)
             self.btnClose.setEnabled(False)
+            #self.btnCancel.setEnabled(True)
+            
             buttons = self.mainWidget.iterateButtons
             self.iterateParam = None
 
@@ -181,27 +191,62 @@ class AlgorithmDialog(AlgorithmDialogBase):
             except:
                 pass
 
-            QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+            #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
 
             self.setInfo(
                 self.tr('<b>Algorithm %s starting...</b>') % self.alg.name)
 
             if self.iterateParam:
-                if runalgIterating(self.alg, self.iterateParam, self):
+                '''if runalgIterating(self.alg, self.iterateParam, self):
                     self.finish()
                 else:
                     QApplication.restoreOverrideCursor()
-                    self.resetGUI()
+                    self.resetGUI()'''
+                pass
             else:
                 command = self.alg.getAsCommand()
                 if command:
                     ProcessingLog.addToLog(
                         ProcessingLog.LOG_ALGORITHM, command)
-                if runalg(self.alg, self):
-                    self.finish()
-                else:
-                    QApplication.restoreOverrideCursor()
-                    self.resetGUI()
+
+                # ----------------------------------
+                
+                # Connecting progress bar signals
+                self.alg.progress.connect(self.setPercentage)
+                self.alg.setText.connect(self.setText)
+                self.alg.setCommand.connect(self.setCommand)
+                self.alg.setConsoleInfo.connect(self.setConsoleInfo)
+                self.alg.setInfo.connect(self.setInfo)
+                
+                AlgorithmDialog.workerThread = QThread()
+                AlgorithmDialog.workerThread.setTerminationEnabled(True)
+                
+                # Button to quit the thread
+                self.btnCancel.clicked.connect(self.quitAlgExecution)
+                #AlgorithmDialog.workerThread.terminated.connect(self.quitAlgExecution)
+                
+                
+                AlgorithmDialog.algExecutor = AlgorithmExecutor(self.alg, self)
+                AlgorithmDialog.algExecutor.moveToThread(AlgorithmDialog.workerThread)
+                AlgorithmDialog.workerThread.started.connect(AlgorithmDialog.algExecutor.runalg)
+                #AlgorithmDialog.algExecutor.setResult.connect(self.setAlgExeResult)
+                
+                self.algExecutor.finished.connect(self.postProcess)
+                self.algExecutor.finished.connect(AlgorithmDialog.workerThread.exit)
+                
+                try:
+                    
+                    AlgorithmDialog.workerThread.start()
+                    #objThread.terminate()
+                    #self.algExecutor.finished.emit(False)
+                    #ProcessingLog.addToLog("Quitting thread!", ProcessingLog.LOG_INFO)
+                    #QApplication.restoreOverrideCursor()
+                    #self.resetGUI()
+                    #time.sleep(1) 
+                except Exception, e:
+                    ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
+                # ----------------------------------
+                
         except AlgorithmDialogBase.InvalidParameterValue, e:
             try:
                 self.buttonBox.accepted.connect(lambda :
@@ -221,9 +266,7 @@ class AlgorithmDialog(AlgorithmDialogBase):
         keepOpen = ProcessingConfig.getSetting(ProcessingConfig.KEEP_DIALOG_OPEN)
 
         if self.iterateParam is None:
-            if not handleAlgorithmResults(self.alg, self, not keepOpen):
-                self.resetGUI()
-                return
+            handleAlgorithmResults(self.alg, self, not keepOpen)
 
         self.executed = True
         self.setInfo('Algorithm %s finished' % self.alg.name)
@@ -237,3 +280,21 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 self.setInfo(
                     self.tr('HTML output has been generated by this algorithm.'
                             '\nOpen the results dialog to check it.'))
+           
+    @pyqtSlot(bool)     
+    def postProcess(self, algResult):
+        if algResult:
+            self.setInfo(self.tr('<b>Algorithm\'s thread finished!</b>'))
+            self.finish()
+        else:
+            QApplication.restoreOverrideCursor()
+            self.resetGUI()
+        
+    def quitAlgExecution(self):
+        self.setInfo(self.tr('<b>Interrupting algorithm execution...</b>'))
+        QApplication.restoreOverrideCursor()
+        AlgorithmDialog.workerThread.quit()
+        AlgorithmDialog.workerThread.wait()
+        self.finish()
+        
+        

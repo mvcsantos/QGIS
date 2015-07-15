@@ -64,7 +64,7 @@ class FieldsMapper(GeoAlgorithm):
     def getCustomModelerParametersDialog(self, modelAlg, algIndex=None):
         return FieldsMapperModelerParametersDialog(self, modelAlg, algIndex)
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = self.getParameterValue(self.INPUT_LAYER)
         mapping = self.getParameterValue(self.FIELDS_MAPPING)
         output = self.getOutputFromName(self.OUTPUT_LAYER)
@@ -126,7 +126,7 @@ class FieldsMapper(GeoAlgorithm):
             writer.addFeature(outFeat)
 
             current += 1
-            progress.setPercentage(100 * current / float(count))
+            self.progress.emit(100 * current / float(count))
 
         del writer
 

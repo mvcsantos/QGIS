@@ -53,7 +53,7 @@ class SimplifyGeometries(GeoAlgorithm):
 
         self.addOutput(OutputVector(self.OUTPUT, self.tr('Simplified')))
 
-    def processAlgorithm(self, progress):
+    def processAlgorithm(self):
         layer = dataobjects.getObjectFromUri(self.getParameterValue(self.INPUT))
         tolerance = self.getParameterValue(self.TOLERANCE)
 
@@ -77,7 +77,7 @@ class SimplifyGeometries(GeoAlgorithm):
             feature.setAttributes(attrs)
             writer.addFeature(feature)
             current += 1
-            progress.setPercentage(int(current * total))
+            self.progress.emit(int(current * total))
 
         del writer
 
