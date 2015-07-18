@@ -27,7 +27,7 @@ __revision__ = '$Format:%H$'
 
 import sys
 
-from PyQt4.QtCore import Qt, QCoreApplication, QThread, QObject, pyqtSlot
+from PyQt4.QtCore import Qt, QCoreApplication, QThread, QObject, pyqtSlot, pyqtSignal 
 from PyQt4.QtGui import QApplication, QCursor
 
 from qgis.utils import iface
@@ -75,15 +75,15 @@ class Processing(QObject):
 
     modeler = ModelerAlgorithmProvider()
 
-    algExeResult = None
-    notFinished = True
     algExecutor = None
     onFinish = None
-    progress = None
+    
+    setAlgorithmResult = pyqtSignal(dict)
     
     def __init__(self):
         QObject.__init__(self, None)
         self.alg = None
+        self.progress = None
 
     @staticmethod
     def addProvider(provider, updateList=True):
@@ -275,9 +275,14 @@ class Processing(QObject):
     @staticmethod
     def runandload(name, *args):
         Processing.runAlgorithm(name, handleAlgorithmResults, *args)
-
+        
     @staticmethod
-    def runAlgorithm(algOrName, onFinish, *args):
+    def tr(string, context=''):
+        if context == '':
+            context = 'Processing'
+        return QCoreApplication.translate(context, string)
+
+    def runAlgorithm(self, algOrName, onFinish, *args):
         if isinstance(algOrName, GeoAlgorithm):
             alg = algOrName
         else:
@@ -286,45 +291,45 @@ class Processing(QObject):
             print 'Error: Algorithm not found\n'
             return
         
-        Processing.alg = alg.getCopy()
+        self.alg = alg.getCopy()
 
         if len(args) == 1 and isinstance(args[0], dict):
             # Set params by name and try to run the alg even if not all parameter values are provided,
             # by using the default values instead.
             setParams = []
             for (name, value) in args[0].items():
-                param = Processing.alg.getParameterFromName(name)
+                param = self.alg.getParameterFromName(name)
                 if param and param.setValue(value):
                     setParams.append(name)
                     continue
-                output = Processing.alg.getOutputFromName(name)
+                output = self.alg.getOutputFromName(name)
                 if output and output.setValue(value):
                     continue
                 print 'Error: Wrong parameter value %s for parameter %s.' % (value, name)
                 ProcessingLog.addToLog(
                     ProcessingLog.LOG_ERROR,
                     Processing.tr('Error in %s. Wrong parameter value %s for parameter %s.') % (
-                        Processing.alg.name, value, name )
+                        self.alg.name, value, name )
                 )
                 return
             # fill any missing parameters with default values if allowed
-            for param in Processing.alg.parameters:
+            for param in self.alg.parameters:
                 if param.name not in setParams:
                     if not param.setValue(None):
                         print ('Error: Missing parameter value for parameter %s.' % (param.name))
                         ProcessingLog.addToLog(
                             ProcessingLog.LOG_ERROR,
                             Processing.tr('Error in %s. Missing parameter value for parameter %s.') % (
-                                Processing.alg.name, param.name )
+                                self.alg.name, param.name )
                         )
                         return
         else:
-            if len(args) != Processing.alg.getVisibleParametersCount() + Processing.alg.getVisibleOutputsCount():
+            if len(args) != self.alg.getVisibleParametersCount() + self.alg.getVisibleOutputsCount():
                 print 'Error: Wrong number of parameters'
                 processing.alghelp(algOrName)
                 return
             i = 0
-            for param in Processing.alg.parameters:
+            for param in self.alg.parameters:
                 if not param.hidden:
                     if not param.setValue(args[i]):
                         print 'Error: Wrong parameter value: ' \
@@ -332,19 +337,19 @@ class Processing(QObject):
                         return
                     i = i + 1
 
-            for output in Processing.alg.outputs:
+            for output in self.alg.outputs:
                 if not output.hidden:
                     if not output.setValue(args[i]):
                         print 'Error: Wrong output value: ' + unicode(args[i])
                         return
                     i = i + 1
 
-        msg = Processing.alg.checkParameterValuesBeforeExecuting()
+        msg = self.alg.checkParameterValuesBeforeExecuting()
         if msg:
             print 'Unable to execute algorithm\n' + msg
             return
 
-        if not Processing.alg.checkInputCRS():
+        if not self.alg.checkInputCRS():
             print 'Warning: Not all input layers use the same CRS.\n' \
                 + 'This can cause unexpected results.'
 
@@ -357,54 +362,47 @@ class Processing(QObject):
           elif cursor.shape() != Qt.WaitCursor:
               QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))'''
         
-        Processing.progress = None
+        self.progress = None
         if iface is not None :
-            Processing.progress = MessageBarProgress()
+            self.progress = MessageBarProgress()
 
         # ----------------------------------
-        Processing.onFinish = onFinish
-        if Processing.progress is None:
-            Processing.progress = SilentProgress()
+        self.onFinish = onFinish
+        if self.progress is None:
+            self.progress = SilentProgress()
             
-        Processing.alg.progress.connect(Processing.progress.setPercentage)
-        Processing.alg.setText.connect(Processing.progress.setText)
-        Processing.alg.setCommand.connect(Processing.progress.setCommand)
-        Processing.alg.setConsoleInfo.connect(Processing.progress.setConsoleInfo)
-        Processing.alg.setInfo.connect(Processing.progress.setInfo)
+        self.alg.progress.connect(self.progress.setPercentage)
+        self.alg.setText.connect(self.progress.setText)
+        self.alg.setCommand.connect(self.progress.setCommand)
+        self.alg.setConsoleInfo.connect(self.progress.setConsoleInfo)
+        self.alg.setInfo.connect(self.progress.setInfo)
         
         objThread = QThread()
         objThread.setTerminationEnabled(True)
         
-        Processing.algExecutor = AlgorithmExecutor(Processing.alg)
-        objThread.started.connect(Processing.algExecutor.runalg)
+        self.algExecutor = AlgorithmExecutor(self.alg)
+        objThread.started.connect(self.algExecutor.runalg)
         
-        Processing.algExecutor.finished.connect(Processing.postProcess)
-        Processing.algExecutor.finished.connect(objThread.quit)
-        Processing.algExecutor.moveToThread(objThread)
+        self.algExecutor.setResult.connect(self.postProcess)
+        self.algExecutor.setResult.connect(self.algExecutor.finished)
+        self.algExecutor.finished.connect(objThread.quit)
+        self.algExecutor.moveToThread(objThread)
         
         try:
             objThread.start()
-        except Exception, e:
+        except Exception as e:
             ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
+            print e
+            
         time.sleep(1)
-        
-        return None
-       
-    @staticmethod
-    def tr(string, context=''):
-        if context == '':
-            context = 'Processing'
-        return QCoreApplication.translate(context, string)
-    
-    @staticmethod 
-    @pyqtSlot(bool)    
-    def postProcess(algResult):
-        if Processing.onFinish is not None and algResult:
-            Processing.onFinish(Processing.alg, Processing.progress)
+
+    def postProcess(self, algResult):
+        if self.onFinish is not None and algResult:
+            self.onFinish(self.alg, self.progress)
         if iface is not None:
           QApplication.restoreOverrideCursor()
-          Processing.progress.close()
-        
-        print Processing.alg.getOutputValuesAsDictionary()
+          self.progress.close()
+          
+        self.setAlgorithmResult.emit(self.alg.getOutputValuesAsDictionary())
 
 

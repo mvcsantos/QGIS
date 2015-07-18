@@ -13,11 +13,8 @@ import time
 
 class AlgorithmExecutor(QObject):
 
-    #started = QtCore.pyqtSignal()
-    #process = QtCore.pyqtSignal(int)
-    #stop = QtCore.pyqtSignal()
-    setResult= pyqtSignal()
-    finished = pyqtSignal(bool)
+    setResult = pyqtSignal(bool)
+    finished = pyqtSignal()
 
     def __init__(self, alg, parent = None):
         QObject.__init__(self, parent)
@@ -32,15 +29,15 @@ class AlgorithmExecutor(QObject):
         """
         try:
             self.alg.execute()
-            self.finished.emit(True)
-        except Exception, e:
+            self.setResult.emit(True)
+        except Exception as e:
             ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
             print e
-            self.finished.emit(False)
+            self.finished.emit()
 
-    def runalgIterating():
+    def runalgIterating(self):
         pass
-
+        
     def tr(self, string, context=''):
         if context == '':
             context = 'AlgorithmExecutor'
