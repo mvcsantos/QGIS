@@ -29,6 +29,10 @@ from processing.core.Processing import Processing
 from processing.gui.Postprocessing import handleAlgorithmResults
 from processing.core.parameters import ParameterSelection
 
+algResults = {}
+processing = Processing()
+
+
 
 def alglist(text=None):
     s = ''
@@ -59,6 +63,7 @@ def algoptions(name):
 
 def alghelp(name):
     alg = Processing.getAlgorithm(name)
+    
     if alg is not None:
         alg = alg.getCopy()
         print str(alg)
@@ -68,10 +73,23 @@ def alghelp(name):
 
 
 def runalg(algOrName, *args):
-    alg = Processing.runAlgorithm(algOrName, None, *args)
-    if alg is not None:
-        return alg.getOutputValuesAsDictionary()
+    global processing
+    processing = Processing()
+    processing.setAlgorithmResult.connect(storeAlgResult)
+    processing.runAlgorithm(algOrName, None, *args)
+    #if alg is not None:
+    #    return alg.getOutputValuesAsDictionary()
 
 
 def runandload(name, *args):
-    return Processing.runAlgorithm(name, handleAlgorithmResults, *args)
+    global processing
+    processing = Processing()
+    processing.setAlgorithmResult.connect(storeAlgResult)
+    processing.runAlgorithm(name, handleAlgorithmResults, *args)
+
+
+def storeAlgResult(result):
+    global algResults
+    algResults.update({'OUTPUT'+str(len(algResults)):result.values()[0]})
+    print result
+    
