@@ -89,7 +89,7 @@ namespace pal
 
   double Feature::calculatePriority() const
   {
-    return mPriority >= 0 ? mPriority : layer->getPriority();
+    return mPriority >= 0 ? mPriority : layer->priority();
   }
 
   ////////////
@@ -132,8 +132,6 @@ namespace pal
 
   void FeaturePart::extractCoords( const GEOSGeometry* geom )
   {
-    int i, j;
-
     const GEOSCoordSequence *coordSeq;
     GEOSContextHandle_t geosctxt = geosContext();
 
@@ -145,35 +143,15 @@ namespace pal
       {
         // set nbHoles, holes member variables
         nbHoles = GEOSGetNumInteriorRings_r( geosctxt, geom );
-        holes = new PointSet*[nbHoles];
+        holes = new FeaturePart*[nbHoles];
 
-        for ( i = 0; i < nbHoles; i++ )
+        for ( int i = 0; i < nbHoles; ++i )
         {
-          holes[i] = new PointSet();
-          holes[i]->holeOf = NULL;
-
           const GEOSGeometry* interior =  GEOSGetInteriorRingN_r( geosctxt, geom, i );
-          holes[i]->nbPoints = GEOSGetNumCoordinates_r( geosctxt, interior );
-          holes[i]->x = new double[holes[i]->nbPoints];
-          holes[i]->y = new double[holes[i]->nbPoints];
-
-          holes[i]->xmin = holes[i]->ymin = DBL_MAX;
-          holes[i]->xmax = holes[i]->ymax = -DBL_MAX;
-
-          coordSeq = GEOSGeom_getCoordSeq_r( geosctxt, interior );
-
-          for ( j = 0; j < holes[i]->nbPoints; j++ )
-          {
-            GEOSCoordSeq_getX_r( geosctxt, coordSeq, j, &holes[i]->x[j] );
-            GEOSCoordSeq_getY_r( geosctxt, coordSeq, j, &holes[i]->y[j] );
-
-            holes[i]->xmax = holes[i]->x[j] > holes[i]->xmax ? holes[i]->x[j] : holes[i]->xmax;
-            holes[i]->xmin = holes[i]->x[j] < holes[i]->xmin ? holes[i]->x[j] : holes[i]->xmin;
-
-            holes[i]->ymax = holes[i]->y[j] > holes[i]->ymax ? holes[i]->y[j] : holes[i]->ymax;
-            holes[i]->ymin = holes[i]->y[j] < holes[i]->ymin ? holes[i]->y[j] : holes[i]->ymin;
-          }
-
+          holes[i] = new FeaturePart( f, interior );
+          holes[i]->holeOf = NULL;
+          // possibly not needed. it's not done for the exterior ring, so I'm not sure
+          // why it's just done here...
           reorderPolygon( holes[i]->nbPoints, holes[i]->x, holes[i]->y );
         }
       }
@@ -199,7 +177,7 @@ namespace pal
     x = new double[nbPoints];
     y = new double[nbPoints];
 
-    for ( i = 0; i < nbPoints; i++ )
+    for ( int i = 0; i < nbPoints; ++i )
     {
       GEOSCoordSeq_getX_r( geosctxt, coordSeq, i, &x[i] );
       GEOSCoordSeq_getY_r( geosctxt, coordSeq, i, &y[i] );
@@ -259,7 +237,7 @@ namespace pal
 
 
 
-  Layer *FeaturePart::getLayer()
+  Layer* FeaturePart::layer()
   {
     return f->layer;
   }
@@ -357,7 +335,7 @@ namespace pal
       }
     }
 
-    if ( f->layer->getArrangement() == P_POINT )
+    if ( f->layer->arrangement() == P_POINT )
     {
       //if in "around point" placement mode, then we use the label distance to determine
       //the label's offset
@@ -563,7 +541,7 @@ namespace pal
     double alpha;
     double cost;
 
-    unsigned long flags = f->layer->getArrangementFlags();
+    LineArrangementFlags flags = f->layer->arrangementFlags();
     if ( flags == 0 )
       flags = FLAG_ON_LINE; // default flag
 
@@ -669,7 +647,7 @@ namespace pal
 #ifdef _DEBUG_FULL_
       std::cout << "  Create new label" << std::endl;
 #endif
-      if ( f->layer->arrangement == P_LINE )
+      if ( f->layer->arrangement() == P_LINE )
       {
         // find out whether the line direction for this candidate is from right to left
         bool isRightToLeft = ( alpha > M_PI / 2 || alpha <= -M_PI / 2 );
@@ -686,7 +664,7 @@ namespace pal
         if ( flags & FLAG_ON_LINE )
           positions.append( new LabelPosition( i, bx - yrm*cos( beta ) / 2, by - yrm*sin( beta ) / 2, xrm, yrm, alpha, cost, this, isRightToLeft ) ); // Line
       }
-      else if ( f->layer->arrangement == P_HORIZ )
+      else if ( f->layer->arrangement() == P_HORIZ )
       {
         positions.append( new LabelPosition( i, bx - xrm / 2, by - yrm / 2, xrm, yrm, 0, cost, this ) ); // Line
       }
@@ -956,7 +934,7 @@ namespace pal
     QLinkedList<LabelPosition*> positions;
     double delta = qMax( f->labelInfo->label_height, total_distance / 10.0 );
 
-    unsigned long flags = f->layer->getArrangementFlags();
+    unsigned long flags = f->layer->arrangementFlags();
     if ( flags == 0 )
       flags = FLAG_ON_LINE; // default flag
 
@@ -1129,7 +1107,7 @@ namespace pal
 #endif
 
           bool enoughPlace = false;
-          if ( f->layer->getArrangement() == P_FREE )
+          if ( f->layer->arrangement() == P_FREE )
           {
             enoughPlace = true;
             px = ( box->x[0] + box->x[2] ) / 2 - xrm;
@@ -1158,7 +1136,7 @@ namespace pal
 
           } // arrangement== FREE ?
 
-          if ( f->layer->getArrangement() == P_HORIZ || enoughPlace )
+          if ( f->layer->arrangement() == P_HORIZ || enoughPlace )
           {
             alpha = 0.0; // HORIZ
           }
@@ -1308,26 +1286,26 @@ namespace pal
       switch ( type )
       {
         case GEOS_POINT:
-          if ( f->layer->getArrangement() == P_POINT_OVER || f->fixedQuadrant() )
+          if ( f->layer->arrangement() == P_POINT_OVER || f->fixedQuadrant() )
             nbp = setPositionOverPoint( x[0], y[0], lPos, angle );
           else
             nbp = setPositionForPoint( x[0], y[0], lPos, angle );
           break;
         case GEOS_LINESTRING:
-          if ( f->layer->getArrangement() == P_CURVED )
+          if ( f->layer->arrangement() == P_CURVED )
             nbp = setPositionForLineCurved( lPos, mapShape );
           else
             nbp = setPositionForLine( lPos, mapShape );
           break;
 
         case GEOS_POLYGON:
-          switch ( f->layer->getArrangement() )
+          switch ( f->layer->arrangement() )
           {
             case P_POINT:
             case P_POINT_OVER:
               double cx, cy;
-              mapShape->getCentroid( cx, cy, f->layer->getCentroidInside() );
-              if ( f->layer->getArrangement() == P_POINT_OVER )
+              mapShape->getCentroid( cx, cy, f->layer->centroidInside() );
+              if ( f->layer->arrangement() == P_POINT_OVER )
                 nbp = setPositionOverPoint( cx, cy, lPos, angle );
               else
                 nbp = setPositionForPoint( cx, cy, lPos, angle );

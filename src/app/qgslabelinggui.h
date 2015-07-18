@@ -53,6 +53,7 @@ class APP_EXPORT QgsLabelingGui : public QWidget, private Ui::QgsLabelingGuiBase
     void updatePlacementWidgets();
     void updateSvgWidgets( const QString& svgPath );
 
+    void on_mLabelModeComboBox_currentIndexChanged( int index );
     void on_mPreviewSizeSlider_valueChanged( int i );
     void on_mFontSizeSpinBox_valueChanged( double d );
     void on_mFontCapitalsComboBox_currentIndexChanged( int index );
@@ -79,6 +80,7 @@ class APP_EXPORT QgsLabelingGui : public QWidget, private Ui::QgsLabelingGuiBase
     void on_mPreviewBackgroundBtn_colorChanged( const QColor &color );
     void on_mDirectSymbLeftToolBtn_clicked();
     void on_mDirectSymbRightToolBtn_clicked();
+    void on_mChkNoObstacle_toggled( bool active );
 
   protected:
     void blockInitSignals( bool block );

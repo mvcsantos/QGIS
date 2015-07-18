@@ -124,7 +124,7 @@ namespace pal
   {
     mMutex.lock();
     for ( QList<Layer*>::iterator it = layers->begin(); it != layers->end(); ++it )
-      if (( *it )->name == lyrName )
+      if (( *it )->name() == lyrName )
       {
         mMutex.unlock();
         return *it;
@@ -178,7 +178,7 @@ namespace pal
 
     for ( QList<Layer*>::iterator it = layers->begin(); it != layers->end(); ++it )
     {
-      if (( *it )->name == lyrName )    // if layer already known
+      if (( *it )->name() == lyrName )    // if layer already known
       {
         mMutex.unlock();
         //There is already a layer with this name, so we just return the existing one.
@@ -200,7 +200,7 @@ namespace pal
   {
     Layer *layer;
     QLinkedList<Feats*>* fFeats;
-    RTree<PointSet*, double, 2, double> *obstacles;
+    RTree<FeaturePart*, double, 2, double> *obstacles;
     RTree<LabelPosition*, double, 2, double> *candidates;
     double bbox_min[2];
     double bbox_max[2];
@@ -224,7 +224,7 @@ namespace pal
 #endif
 
     // all feature which are obstacle will be inserted into obstacles
-    if ( context->layer->obstacle )
+    if ( context->layer->obstacle() )
     {
       ft_ptr->getBoundingBox( amin, amax );
       context->obstacles->Insert( amin, amax, ft_ptr );
@@ -233,7 +233,7 @@ namespace pal
     // first do some checks whether to extract candidates or not
 
     // feature has to be labeled?
-    if ( !context->layer->toLabel )
+    if ( !context->layer->labelLayer() )
       return true;
 
     // is the feature well defined?  TODO Check epsilon
@@ -287,7 +287,7 @@ namespace pal
     Pal* pal;
   } FilterContext;
 
-  bool filteringCallback( PointSet *pset, void *ctx )
+  bool filteringCallback( FeaturePart *featurePart, void *ctx )
   {
 
     RTree<LabelPosition*, double, 2, double> *cdtsIndex = (( FilterContext* ) ctx )->cdtsIndex;
@@ -297,10 +297,10 @@ namespace pal
       return false; // do not continue searching
 
     double amin[2], amax[2];
-    pset->getBoundingBox( amin, amax );
+    featurePart->getBoundingBox( amin, amax );
 
     LabelPosition::PruneCtx pruneContext;
-    pruneContext.obstacle = pset;
+    pruneContext.obstacle = featurePart;
     pruneContext.pal = pal;
     cdtsIndex->Search( amin, amax, LabelPosition::pruneCallback, ( void* ) &pruneContext );
 
@@ -310,7 +310,7 @@ namespace pal
   Problem* Pal::extract( int nbLayers, const QStringList& layersName, double lambda_min, double phi_min, double lambda_max, double phi_max )
   {
     // to store obstacles
-    RTree<PointSet*, double, 2, double> *obstacles = new RTree<PointSet*, double, 2, double>();
+    RTree<FeaturePart*, double, 2, double> *obstacles = new RTree<FeaturePart*, double, 2, double>();
 
     Problem *prob = new Problem();
 
@@ -366,15 +366,15 @@ namespace pal
       {
         layer = *it;
         // Only select those who are active and labellable or those who are active and which must be treated as obstaclewhich must be treated as obstacle
-        if ( layer->active
-             && ( layer->obstacle || layer->toLabel ) )
+        if ( layer->active()
+             && ( layer->obstacle() || layer->labelLayer() ) )
         {
 
           // check if this selected layers has been selected by user
-          if ( layersName.at( i ) == layer->name )
+          if ( layersName.at( i ) == layer->name() )
           {
             // check for connected features with the same label text and join them
-            if ( layer->getMergeConnectedLines() )
+            if ( layer->mergeConnectedLines() )
               layer->joinConnectedFeatures();
 
             layer->chopFeaturesAtRepeatDistance();
@@ -397,7 +397,7 @@ namespace pal
 #endif
             if ( context->fFeats->size() - oldNbft > 0 )
             {
-              labLayers << layer->getName();
+              labLayers << layer->name();
             }
             oldNbft = context->fFeats->size();
 
@@ -597,7 +597,7 @@ namespace pal
     for ( QList<Layer*>::iterator it = layers->begin(); it != layers->end(); ++it )
     {
       layer = *it;
-      layersName << layer->name;
+      layersName << layer->name();
       i++;
     }
     mMutex.unlock();
@@ -721,7 +721,7 @@ namespace pal
     for ( QList<Layer*>::iterator it = layers->begin(); it != layers->end(); ++it )
     {
       layer = *it;
-      layersName << layer->name;
+      layersName << layer->name();
       i++;
     }
     mMutex.unlock();
