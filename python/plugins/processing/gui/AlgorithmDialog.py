@@ -16,7 +16,6 @@
 *                                                                         *
 ***************************************************************************
 """
-from findertools import sleep
 
 __author__ = 'Victor Olaya'
 __date__ = 'August 2012'
@@ -216,32 +215,32 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 self.alg.setConsoleInfo.connect(self.setConsoleInfo)
                 self.alg.setInfo.connect(self.setInfo)
                 
-                AlgorithmDialog.workerThread = QThread()
-                AlgorithmDialog.workerThread.setTerminationEnabled(True)
+                workerThread = QThread()
+                workerThread.setTerminationEnabled(True)
                 
                 # Button to quit the thread
-                self.btnCancel.clicked.connect(self.quitAlgExecution)
-                #AlgorithmDialog.workerThread.terminated.connect(self.quitAlgExecution)
+                self.btnCancel.clicked.connect(workerThread.terminate)
+                workerThread.terminated.connect(self.cancelAlgExecution)
                 
                 
-                AlgorithmDialog.algExecutor = AlgorithmExecutor(self.alg, self)
-                AlgorithmDialog.algExecutor.moveToThread(AlgorithmDialog.workerThread)
-                AlgorithmDialog.workerThread.started.connect(AlgorithmDialog.algExecutor.runalg)
+                self.algExecutor = AlgorithmExecutor(self.alg, self)
+                workerThread.started.connect(self.algExecutor.runalg)
                 #AlgorithmDialog.algExecutor.setResult.connect(self.setAlgExeResult)
                 
-                self.algExecutor.finished.connect(self.postProcess)
-                self.algExecutor.finished.connect(AlgorithmDialog.workerThread.exit)
+                self.algExecutor.setResult.connect(self.postProcess)
+                self.algExecutor.setResult.connect(self.algExecutor.finished)
+                self.algExecutor.finished.connect(workerThread.quit)
+                self.algExecutor.moveToThread(workerThread)
                 
                 try:
-                    
-                    AlgorithmDialog.workerThread.start()
+                    workerThread.start()
                     #objThread.terminate()
                     #self.algExecutor.finished.emit(False)
                     #ProcessingLog.addToLog("Quitting thread!", ProcessingLog.LOG_INFO)
                     #QApplication.restoreOverrideCursor()
                     #self.resetGUI()
-                    #time.sleep(1) 
-                except Exception, e:
+                    time.sleep(1) 
+                except Exception as e:
                     ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
                 # ----------------------------------
                 
@@ -288,11 +287,11 @@ class AlgorithmDialog(AlgorithmDialogBase):
             QApplication.restoreOverrideCursor()
             self.resetGUI()
         
-    def quitAlgExecution(self):
+    def cancelAlgExecution(self):
         self.setInfo(self.tr('<b>Interrupting algorithm execution...</b>'))
         QApplication.restoreOverrideCursor()
-        AlgorithmDialog.workerThread.quit()
-        AlgorithmDialog.workerThread.wait()
-        self.finish()
+        #AlgorithmDialog.workerThread.quit()
+        #AlgorithmDialog.workerThread.wait()
+        self.resetGUI()
         
         
