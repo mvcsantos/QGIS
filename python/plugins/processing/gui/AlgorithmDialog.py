@@ -70,6 +70,18 @@ class AlgorithmDialog(AlgorithmDialogBase):
         AlgorithmDialogBase.__init__(self, alg)
 
         self.alg = alg
+        # Connecting progress bar signals
+        self.alg.progress.connect(self.setPercentage)
+        self.alg.setText.connect(self.setText)
+        self.alg.setCommand.connect(self.setCommand)
+        self.alg.setConsoleInfo.connect(self.setConsoleInfo)
+        self.alg.setInfo.connect(self.setInfo)
+        
+        self.algExecutor = AlgorithmExecutor(self.alg, self)
+        # When the algorithm finished call postProcess to 
+        # close the dialog and emit the signal finish the thread
+        self.algExecutor.setResult.connect(self.postProcess)
+        self.algExecutor.setResult.connect(self.algExecutor.finished)
 
         self.mainWidget = ParametersPanel(self, alg)
         self.setMainWidget()
@@ -195,52 +207,35 @@ class AlgorithmDialog(AlgorithmDialogBase):
             self.setInfo(
                 self.tr('<b>Algorithm %s starting...</b>') % self.alg.name)
 
+            # Thread to run the algorithm
+            workerThread = QThread()
+            workerThread.setTerminationEnabled(True)
+            
+            # Connect the signal emitted when the algorithm is finished
+            # to the necessary slot that quit the thread
+            self.algExecutor.finished.connect(workerThread.quit)
+            self.algExecutor.moveToThread(workerThread)
+            
+            # Button to quit the thread
+            self.btnCancel.clicked.connect(workerThread.terminate)
+            workerThread.terminated.connect(self.cancelAlgExecution)
+
             if self.iterateParam:
-                '''if runalgIterating(self.alg, self.iterateParam, self):
-                    self.finish()
-                else:
-                    QApplication.restoreOverrideCursor()
-                    self.resetGUI()'''
-                pass
+               workerThread.started.connect(self.algExecutor.runalgIterating)
+               try:
+                   workerThread.start()
+                   time.sleep(1) 
+               except Exception as e:
+                   ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
+               
             else:
                 command = self.alg.getAsCommand()
+                workerThread.started.connect(self.algExecutor.runalg)
                 if command:
                     ProcessingLog.addToLog(
                         ProcessingLog.LOG_ALGORITHM, command)
-
-                # ----------------------------------
-                
-                # Connecting progress bar signals
-                self.alg.progress.connect(self.setPercentage)
-                self.alg.setText.connect(self.setText)
-                self.alg.setCommand.connect(self.setCommand)
-                self.alg.setConsoleInfo.connect(self.setConsoleInfo)
-                self.alg.setInfo.connect(self.setInfo)
-                
-                workerThread = QThread()
-                workerThread.setTerminationEnabled(True)
-                
-                # Button to quit the thread
-                self.btnCancel.clicked.connect(workerThread.terminate)
-                workerThread.terminated.connect(self.cancelAlgExecution)
-                
-                
-                self.algExecutor = AlgorithmExecutor(self.alg, self)
-                workerThread.started.connect(self.algExecutor.runalg)
-                #AlgorithmDialog.algExecutor.setResult.connect(self.setAlgExeResult)
-                
-                self.algExecutor.setResult.connect(self.postProcess)
-                self.algExecutor.setResult.connect(self.algExecutor.finished)
-                self.algExecutor.finished.connect(workerThread.quit)
-                self.algExecutor.moveToThread(workerThread)
-                
                 try:
                     workerThread.start()
-                    #objThread.terminate()
-                    #self.algExecutor.finished.emit(False)
-                    #ProcessingLog.addToLog("Quitting thread!", ProcessingLog.LOG_INFO)
-                    #QApplication.restoreOverrideCursor()
-                    #self.resetGUI()
                     time.sleep(1) 
                 except Exception as e:
                     ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
