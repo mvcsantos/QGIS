@@ -82,6 +82,8 @@ class AlgorithmDialog(AlgorithmDialogBase):
         # close the dialog and emit the signal finish the thread
         self.algExecutor.setResult.connect(self.postProcess)
         self.algExecutor.setResult.connect(self.algExecutor.finished)
+        self.algExecutor.setText.connect(self.setText)
+        self.algExecutor.setPercentage.connect(self.setPercentage)
 
         self.mainWidget = ParametersPanel(self, alg)
         self.setMainWidget()
@@ -191,6 +193,7 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 button = buttons.values()[i]
                 if button.isChecked():
                     self.iterateParam = buttons.keys()[i]
+                    self.algExecutor.paramToIter = self.iterateParam
                     break
 
             self.progressBar.setMaximum(0)
