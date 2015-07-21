@@ -377,24 +377,22 @@ class Processing(QObject):
         self.alg.setConsoleInfo.connect(self.progress.setConsoleInfo)
         self.alg.setInfo.connect(self.progress.setInfo)
         
-        objThread = QThread()
-        objThread.setTerminationEnabled(True)
+        self.workerThread = QThread()
+        self.workerThread.setTerminationEnabled(True)
         
         self.algExecutor = AlgorithmExecutor(self.alg)
-        objThread.started.connect(self.algExecutor.runalg)
+        self.workerThread.started.connect(self.algExecutor.runalg)
         
         self.algExecutor.setResult.connect(self.postProcess)
         self.algExecutor.setResult.connect(self.algExecutor.finished)
-        self.algExecutor.finished.connect(objThread.quit)
-        self.algExecutor.moveToThread(objThread)
+        self.algExecutor.finished.connect(self.workerThread.quit)
+        self.algExecutor.moveToThread(self.workerThread)
         
         try:
-            objThread.start()
+            self.workerThread.start()
         except Exception as e:
             ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
             print e
-            
-        time.sleep(1)
 
     def postProcess(self, algResult):
         if self.onFinish is not None and algResult:

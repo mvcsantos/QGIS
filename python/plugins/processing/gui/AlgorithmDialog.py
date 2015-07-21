@@ -211,35 +211,35 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 self.tr('<b>Algorithm %s starting...</b>') % self.alg.name)
 
             # Thread to run the algorithm
-            workerThread = QThread()
-            workerThread.setTerminationEnabled(True)
+            self.workerThread = QThread()
+            self.workerThread.setTerminationEnabled(True)
             
             # Connect the signal emitted when the algorithm is finished
             # to the necessary slot that quit the thread
-            self.algExecutor.finished.connect(workerThread.quit)
-            self.algExecutor.moveToThread(workerThread)
+            self.algExecutor.finished.connect(self.workerThread.quit)
+            self.algExecutor.moveToThread(self.workerThread)
             
             # Button to quit the thread
-            self.btnCancel.clicked.connect(workerThread.terminate)
-            workerThread.terminated.connect(self.cancelAlgExecution)
+            self.btnCancel.clicked.connect(self.workerThread.terminate)
+            self.workerThread.terminated.connect(self.cancelAlgExecution)
 
             if self.iterateParam:
-               workerThread.started.connect(self.algExecutor.runalgIterating)
+               self.workerThread.started.connect(self.algExecutor.runalgIterating)
                try:
-                   workerThread.start()
+                   self.workerThread.start()
                    time.sleep(1) 
                except Exception as e:
                    ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
                
             else:
                 command = self.alg.getAsCommand()
-                workerThread.started.connect(self.algExecutor.runalg)
+                self.workerThread.started.connect(self.algExecutor.runalg)
                 if command:
                     ProcessingLog.addToLog(
                         ProcessingLog.LOG_ALGORITHM, command)
                 try:
-                    workerThread.start()
-                    time.sleep(1) 
+                    self.workerThread.start()
+                    #time.sleep(1) 
                 except Exception as e:
                     ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
                 # ----------------------------------
