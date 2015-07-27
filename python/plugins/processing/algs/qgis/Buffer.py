@@ -28,6 +28,7 @@ __revision__ = '$Format:%H$'
 from qgis.core import QgsFeature, QgsGeometry
 from processing.tools import vector
 from processing.core.ProcessingLog import ProcessingLog
+from processing.core.CancelledAlgorithmExecutionException import CancelledAlgorithmExecutionException
 from PyQt4 import QtCore
 import sys
 
@@ -55,6 +56,9 @@ class Buffer(QtCore.QObject):
         if dissolve:
             first = True
             for inFeat in features:
+                if self.parent().executionCancelled:
+                    raise CancelledAlgorithmExecutionException()
+                
                 attrs = inFeat.attributes()
                 if useField:
                     value = attrs[field]
@@ -81,6 +85,9 @@ class Buffer(QtCore.QObject):
         else:
             # Without dissolve
             for inFeat in features:
+                if self.parent().executionCancelled:
+                    raise CancelledAlgorithmExecutionException()
+                
                 attrs = inFeat.attributes()
                 if useField:
                     value = attrs[field]

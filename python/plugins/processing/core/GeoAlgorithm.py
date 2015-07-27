@@ -38,6 +38,7 @@ from qgis.core import QGis, QgsRasterFileWriter
 from processing.core.ProcessingLog import ProcessingLog
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
+from processing.core.CancelledAlgorithmExecutionException import CancelledAlgorithmExecutionException
 from processing.core.parameters import ParameterRaster, ParameterVector, ParameterMultipleInput, ParameterTable, Parameter
 from processing.core.outputs import OutputVector, OutputRaster, OutputTable, OutputHTML, Output
 from processing.algs.gdal.GdalUtils import GdalUtils
@@ -54,6 +55,7 @@ class GeoAlgorithm(QObject):
     setInfo = pyqtSignal(str)
     setCommand = pyqtSignal(str)
     setConsoleInfo = pyqtSignal(str)
+    cancelAlgorithmExecution = pyqtSignal()
 
     def __init__(self):
         # Call QObject init method
@@ -95,7 +97,13 @@ class GeoAlgorithm(QObject):
         self.model = None
 
         self.defineCharacteristics()
-
+        
+        # If the signal cancelAlgorithmExecution is emitted
+        # the variable executionCancelled is changed and the algorithm 
+        # will raise an exception to stop the execution
+        self.executionCancelled = False        
+        self.cancelAlgorithmExecution.connect(self.cancelExecution)
+        
     def getCopy(self):
         """Returns a new instance of this algorithm, ready to be used
         for being executed.
@@ -106,6 +114,9 @@ class GeoAlgorithm(QObject):
         newone.parameters = copy.deepcopy(self.parameters)
         newone.outputs = copy.deepcopy(self.outputs)
         return newone
+    
+    def cancelExecution(self):
+        self.executionCancelled = True
 
     # methods to overwrite when creating a custom geoalgorithm
 
@@ -255,6 +266,9 @@ class GeoAlgorithm(QObject):
             self.progress.emit(100)
             self.convertUnsupportedFormats()
             self.runPostExecutionScript()
+        except CancelledAlgorithmExecutionException, e:
+            #ProcessingLog.addToLog(ProcessingLog.LOG_INFO, e.msg)
+            raise CancelledAlgorithmExecutionException()
         except GeoAlgorithmExecutionException, gaee:
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, gaee.msg)
             raise gaee

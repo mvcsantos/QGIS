@@ -4,6 +4,7 @@ from qgis.core import QgsFeature, QgsVectorFileWriter
 from PyQt4.QtCore import QSettings, QCoreApplication, QObject, pyqtSlot, pyqtSignal
 from processing.core.ProcessingLog import ProcessingLog
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
+from processing.core.CancelledAlgorithmExecutionException import CancelledAlgorithmExecutionException
 from processing.gui.Postprocessing import handleAlgorithmResults
 from processing.tools import dataobjects
 from processing.tools.system import getTempFilename
@@ -36,10 +37,14 @@ class AlgorithmExecutor(QObject):
         try:
             self.alg.execute()
             self.setResult.emit(True)
+        except CancelledAlgorithmExecutionException, e:
+            #ProcessingLog.addToLog(ProcessingLog.LOG_INFO, e.msg)
+            self.setResult.emit(False)
+            self.alg.executionCancelled = False
         except Exception as e:
             ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
             print e
-            self.finished.emit()
+            self.setResult.emit(False)
 
     def runalgIterating(self):
          # Generate all single-feature layers

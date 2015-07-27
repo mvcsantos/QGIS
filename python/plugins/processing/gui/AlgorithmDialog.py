@@ -184,7 +184,7 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 return
             self.btnRun.setEnabled(False)
             self.btnClose.setEnabled(False)
-            #self.btnCancel.setEnabled(True)
+            self.btnCancel.setEnabled(True)
             
             buttons = self.mainWidget.iterateButtons
             self.iterateParam = None
@@ -220,8 +220,8 @@ class AlgorithmDialog(AlgorithmDialogBase):
             self.algExecutor.moveToThread(self.workerThread)
             
             # Button to quit the thread
-            self.btnCancel.clicked.connect(self.workerThread.terminate)
-            self.workerThread.terminated.connect(self.cancelAlgExecution)
+            self.btnCancel.clicked.connect(self.algExecutor.alg.cancelAlgorithmExecution)
+            #self.workerThread.terminated.connect(self.cancelAlgExecution)
 
             if self.iterateParam:
                self.workerThread.started.connect(self.algExecutor.runalgIterating)
