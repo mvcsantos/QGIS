@@ -38,6 +38,9 @@ class information(GdalAlgorithm):
     OUTPUT = 'OUTPUT'
     NOGCP = 'NOGCP'
     NOMETADATA = 'NOMETADATA'
+    
+    def __init__(self):
+        GdalAlgorithm.__init__(self)
 
     def commandLineName(self):
         return "gdalorg:rasterinfo"
@@ -63,8 +66,8 @@ class information(GdalAlgorithm):
         arguments.append(self.getParameterValue(information.INPUT))
         return ['gdalinfo', GdalUtils.escapeAndJoin(arguments)]
 
-    def processAlgorithm(self, progress):
-        GdalUtils.runGdal(self.getConsoleCommands(), progress)
+    def processAlgorithm(self):
+        self.gdalUtils.runGdal(self.getConsoleCommands())
         output = self.getOutputValue(information.OUTPUT)
         f = open(output, 'w')
         f.write('<pre>')

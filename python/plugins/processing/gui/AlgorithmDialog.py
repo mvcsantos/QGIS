@@ -70,25 +70,9 @@ class AlgorithmDialog(AlgorithmDialogBase):
         AlgorithmDialogBase.__init__(self, alg)
 
         self.alg = alg
-        # Connecting progress bar signals
-        self.alg.progress.connect(self.setPercentage)
-        self.alg.setText.connect(self.setText)
-        self.alg.setCommand.connect(self.setCommand)
-        self.alg.setConsoleInfo.connect(self.setConsoleInfo)
-        self.alg.setInfo.connect(self.setInfo)
         
-        self.algExecutor = AlgorithmExecutor(self.alg, self)
-        # When the algorithm finished call postProcess to 
-        # close the dialog and emit the signal finish the thread
-        self.algExecutor.setResult.connect(self.postProcess)
-        self.algExecutor.setResult.connect(self.algExecutor.finished)
-        self.algExecutor.setText.connect(self.setText)
-        self.algExecutor.setPercentage.connect(self.setPercentage)
-
         self.mainWidget = ParametersPanel(self, alg)
         self.setMainWidget()
-        self.algExecResult = None
-        self.notFinished = True
 
     def setParamValues(self):
         params = self.alg.parameters
@@ -210,6 +194,24 @@ class AlgorithmDialog(AlgorithmDialogBase):
             self.setInfo(
                 self.tr('<b>Algorithm %s starting...</b>') % self.alg.name)
 
+            # Connecting progress bar signals
+            self.alg.progress.connect(self.setPercentage)
+            self.alg.setText.connect(self.setText)
+            self.alg.setCommand.connect(self.setCommand)
+            self.alg.setConsoleInfo.connect(self.setConsoleInfo)
+            self.alg.setInfo.connect(self.setInfo)
+            
+            self.algExecutor = AlgorithmExecutor(self.alg, self)
+            # When the algorithm finished call postProcess to 
+            # close the dialog and emit the signal finish the thread
+            self.algExecutor.setResult.connect(self.postProcess)
+            self.algExecutor.setResult.connect(self.algExecutor.finished)
+            self.algExecutor.setText.connect(self.setText)
+            self.algExecutor.setPercentage.connect(self.setPercentage)
+    
+            self.algExecResult = None
+            self.notFinished = True
+        
             # Thread to run the algorithm
             self.workerThread = QThread()
             self.workerThread.setTerminationEnabled(True)

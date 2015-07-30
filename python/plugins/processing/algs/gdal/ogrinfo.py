@@ -38,6 +38,9 @@ class OgrInfo(OgrAlgorithm):
     INPUT = 'INPUT'
     OUTPUT = 'OUTPUT'
 
+    def __init__(self):
+        OgrAlgorithm.__init__(self)
+
     def defineCharacteristics(self):
         self.name = 'Information'
         self.group = '[OGR] Miscellaneous'
@@ -56,8 +59,8 @@ class OgrInfo(OgrAlgorithm):
         arguments.append(conn)
         return arguments
 
-    def processAlgorithm(self, progress):
-        GdalUtils.runGdal(self.getConsoleCommands(), progress)
+    def processAlgorithm(self):
+        self.gdalUtils.runGdal(self.getConsoleCommands())
         output = self.getOutputValue(self.OUTPUT)
         f = open(output, 'w')
         f.write('<pre>')

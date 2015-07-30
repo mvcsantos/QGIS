@@ -36,6 +36,9 @@ from processing.tools import dataobjects
 
 
 class OgrAlgorithm(GdalAlgorithm):
+    
+    def __init__(self):
+        GdalAlgorithm.__init__(self)
 
     def ogrConnectionString(self, uri):
         ogrstr = None

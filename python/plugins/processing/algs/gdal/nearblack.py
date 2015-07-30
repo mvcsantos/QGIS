@@ -39,6 +39,9 @@ class nearblack(GdalAlgorithm):
     OUTPUT = 'OUTPUT'
     NEAR = 'NEAR'
     WHITE = 'WHITE'
+    
+    def __init__(self):
+        super(nearblack, self).__init__()
 
     def defineCharacteristics(self):
         self.name = 'Near black'

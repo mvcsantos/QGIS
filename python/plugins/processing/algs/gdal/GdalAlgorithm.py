@@ -38,6 +38,10 @@ pluginPath = os.path.normpath(os.path.join(
 
 
 class GdalAlgorithm(GeoAlgorithm):
+    
+    def __init__(self):
+        GeoAlgorithm.__init__(self)
+        self.gdalUtils = GdalUtils(parent=self)
 
     def getIcon(self):
         return QIcon(os.path.join(pluginPath, 'images', 'gdal.png'))
@@ -45,8 +49,8 @@ class GdalAlgorithm(GeoAlgorithm):
     def getCustomParametersDialog(self):
         return GdalAlgorithmDialog(self)
 
-    def processAlgorithm(self, progress):
-        GdalUtils.runGdal(self.getConsoleCommands(), progress)
+    def processAlgorithm(self):
+        self.gdalUtils.runGdal(self.getConsoleCommands())
         
     def help(self):
         try:

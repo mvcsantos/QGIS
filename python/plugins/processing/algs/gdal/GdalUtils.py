@@ -28,7 +28,7 @@ __revision__ = '$Format:%H$'
 import os
 import subprocess
 import platform
-from PyQt4.QtCore import QSettings
+from PyQt4.QtCore import QSettings, QObject
 from qgis.core import QgsApplication
 from processing.core.ProcessingLog import ProcessingLog
 
@@ -39,12 +39,15 @@ except:
     gdalAvailable = False
 
 
-class GdalUtils:
+class GdalUtils(QObject):
 
     supportedRasters = None
 
-    @staticmethod
-    def runGdal(commands, progress):
+    def __init__(self, parent=None):
+        QObject.__init__(self, parent)
+
+
+    def runGdal(self, commands):
         envval = unicode(os.getenv('PATH'))
         # We need to give some extra hints to get things picked up on OS X
         if platform.system() == 'Darwin':
@@ -69,8 +72,8 @@ class GdalUtils:
         loglines = []
         loglines.append('GDAL execution console output')
         fused_command = ''.join(['%s ' % c for c in commands])
-        progress.setInfo('GDAL command:')
-        progress.setCommand(fused_command)
+        self.parent().setInfo.emit('GDAL command:')
+        self.parent().setCommand.emit(fused_command)
         proc = subprocess.Popen(
             fused_command,
             shell=True,
@@ -79,9 +82,9 @@ class GdalUtils:
             stderr=subprocess.STDOUT,
             universal_newlines=True,
         ).stdout
-        progress.setInfo('GDAL command output:')
+        self.parent().setInfo.emit('GDAL command output:')
         for line in iter(proc.readline, ''):
-            progress.setConsoleInfo(line)
+            self.parent().setConsoleInfo.emit(line)
             loglines.append(line)
         ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
         GdalUtils.consoleOutput = loglines
