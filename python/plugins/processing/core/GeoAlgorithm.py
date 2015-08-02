@@ -268,6 +268,8 @@ class GeoAlgorithm(QObject):
             self.runPostExecutionScript()
         except CancelledAlgorithmExecutionException, e:
             #ProcessingLog.addToLog(ProcessingLog.LOG_INFO, e.msg)
+            self.setInfo.emit(
+                self.tr('<b>Algorithm %s stopped...</b>') % self.name)
             raise CancelledAlgorithmExecutionException()
         except GeoAlgorithmExecutionException, gaee:
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, gaee.msg)

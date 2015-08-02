@@ -57,6 +57,7 @@ class Buffer(QtCore.QObject):
             first = True
             for inFeat in features:
                 if self.parent().executionCancelled:
+                    self.parent().executionCancelled = False
                     raise CancelledAlgorithmExecutionException()
                 
                 attrs = inFeat.attributes()
@@ -86,6 +87,7 @@ class Buffer(QtCore.QObject):
             # Without dissolve
             for inFeat in features:
                 if self.parent().executionCancelled:
+                    self.parent().executionCancelled = False
                     raise CancelledAlgorithmExecutionException()
                 
                 attrs = inFeat.attributes()

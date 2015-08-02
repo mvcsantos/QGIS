@@ -37,6 +37,7 @@ from processing.core.parameters import ParameterSelection
 from processing.core.parameters import ParameterCrs
 from processing.core.outputs import OutputVector
 
+from processing.core.CancelledAlgorithmExecutionException import CancelledAlgorithmExecutionException
 
 class Grid(GeoAlgorithm):
     TYPE = 'TYPE'
@@ -133,9 +134,15 @@ class Grid(GeoAlgorithm):
 
         columns = int(math.floor(float(width) / hSpacing))
         rows = int(math.floor(float(height) / vSpacing))
-
+        
+        total = columns + rows
+        current = 0
+        
         # Longitude lines
         for col in xrange(0, columns + 1):
+            if self.executionCancelled:
+                self.executionCancelled = False
+                raise CancelledAlgorithmExecutionException()
             polyline = []
             x = originX + (col * hSpacing)
             for row in xrange(0, rows + 1):
@@ -145,9 +152,15 @@ class Grid(GeoAlgorithm):
             ft.setGeometry(QgsGeometry.fromPolyline(polyline))
             ft.setAttributes([x, originY, x, originY + (rows * vSpacing)])
             writer.addFeature(ft)
+            current += 1
+            self.progress.emit(int(current/total))
+            
 
         # Latitude lines
         for row in xrange(0, rows + 1):
+            if self.executionCancelled:
+                self.executionCancelled = False
+                raise CancelledAlgorithmExecutionException()
             polyline = []
             y = originY + (row * vSpacing)
             for col in xrange(0, columns + 1):
@@ -157,6 +170,8 @@ class Grid(GeoAlgorithm):
             ft.setGeometry(QgsGeometry.fromPolyline(polyline))
             ft.setAttributes([originX, y, originX + (col * hSpacing), y])
             writer.addFeature(ft)
+            current += 1
+            self.progress.emit(int(current/total))
 
     def _rectangleGridPoly(self, writer, width, height, originX, originY,
                            hSpacing, vSpacing):
