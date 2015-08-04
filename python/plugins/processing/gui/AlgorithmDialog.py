@@ -59,12 +59,9 @@ from processing.core.outputs import OutputTable
 from processing.tools import dataobjects
 
 from processing.algs.qgis.Grid import Grid
-import time
+import threading
 
 class AlgorithmDialog(AlgorithmDialogBase):
-    
-    algExecutor = None
-    workerThread = None
 
     def __init__(self, alg):
         AlgorithmDialogBase.__init__(self, alg)
@@ -189,59 +186,66 @@ class AlgorithmDialog(AlgorithmDialogBase):
             except:
                 pass
 
-            #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
-
             self.setInfo(
                 self.tr('<b>Algorithm %s starting...</b>') % self.alg.name)
 
-            # Connecting progress bar signals
-            self.alg.progress.connect(self.setPercentage)
-            self.alg.setText.connect(self.setText)
-            self.alg.setCommand.connect(self.setCommand)
-            self.alg.setConsoleInfo.connect(self.setConsoleInfo)
-            self.alg.setInfo.connect(self.setInfo)
+            self.algExecutor = AlgorithmExecutor(self.alg)
             
-            self.algExecutor = AlgorithmExecutor(self.alg, self)
-            # When the algorithm finished call postProcess to 
-            # close the dialog and emit the signal finish the thread
-            self.algExecutor.setResult.connect(self.postProcess)
-            self.algExecutor.setResult.connect(self.algExecutor.finished)
-            self.algExecutor.setText.connect(self.setText)
-            self.algExecutor.setPercentage.connect(self.setPercentage)
-    
-            self.algExecResult = None
-            self.notFinished = True
-        
             # Thread to run the algorithm
             self.workerThread = QThread()
             self.workerThread.setTerminationEnabled(True)
             
             # Connect the signal emitted when the algorithm is finished
             # to the necessary slot that quit the thread
-            self.algExecutor.finished.connect(self.workerThread.quit)
             self.algExecutor.moveToThread(self.workerThread)
             
-            # Button to quit the thread
-            self.btnCancel.clicked.connect(self.algExecutor.alg.cancelAlgorithmExecution)
             #self.workerThread.terminated.connect(self.cancelAlgExecution)
 
             if self.iterateParam:
                self.workerThread.started.connect(self.algExecutor.runalgIterating)
                try:
                    self.workerThread.start()
-                   time.sleep(1) 
                except Exception as e:
                    ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
                
             else:
                 command = self.alg.getAsCommand()
+                
                 self.workerThread.started.connect(self.algExecutor.runalg)
+                
+                # Connecting progress bar signals
+                self.algExecutor.alg.progress.connect(self.setPercentage)
+                self.algExecutor.alg.setText.connect(self.setText)
+                self.algExecutor.alg.setCommand.connect(self.setCommand)
+                self.algExecutor.alg.setConsoleInfo.connect(self.setConsoleInfo)
+                self.algExecutor.alg.setInfo.connect(self.setInfo)
+                self.algExecutor.setText.connect(self.setText)
+                self.algExecutor.setPercentage.connect(self.setPercentage)
+                
+                # Button to quit the thread
+                self.btnCancel.clicked.connect(self.algExecutor.alg.cancelAlgorithmExecution)
+                
+                # When the algorithm is finished the postProcess is called to 
+                # close the dialog and emit the signal finish the thread
+                self.algExecutor.setResult.connect(self.postProcess)
+                self.algExecutor.setResult.connect(self.algExecutor.finished)
+                
+                # Quit the worker thread
+                
+                self.algExecutor.finished.connect(self.workerThread.quit)
+                #self.algExecutor.moveToThread(self.workerThread)
+                self.workerThread.finished.connect(self.threadFinished)
+                
+                self.algExecResult = None
+                self.notFinished = True
+                
                 if command:
                     ProcessingLog.addToLog(
                         ProcessingLog.LOG_ALGORITHM, command)
                 try:
+                    thread_id = threading.current_thread()
+                    print thread_id
                     self.workerThread.start()
-                    #time.sleep(1) 
                 except Exception as e:
                     ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
                 # ----------------------------------
@@ -292,8 +296,16 @@ class AlgorithmDialog(AlgorithmDialogBase):
     def cancelAlgExecution(self):
         self.setInfo(self.tr('<b>Interrupting algorithm execution...</b>'))
         QApplication.restoreOverrideCursor()
-        #AlgorithmDialog.workerThread.quit()
-        #AlgorithmDialog.workerThread.wait()
+        #AlgorithmDialog.self.workerThread.quit()
+        #AlgorithmDialog.self.workerThread.wait()
         self.resetGUI()
         
+    def threadFinishHandler(self):
+        print 'thread finished'
+        self.workerThread.quit()
+        
+        
+    def threadFinished(self):
+        print 'thread finished'
+        self.workerThread.terminate()
         

@@ -155,6 +155,7 @@ class Grid(GeoAlgorithm):
             current += 1
             self.progress.emit(int(current/total))
             
+        
 
         # Latitude lines
         for row in xrange(0, rows + 1):

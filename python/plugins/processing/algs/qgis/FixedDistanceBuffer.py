@@ -43,6 +43,9 @@ class FixedDistanceBuffer(GeoAlgorithm):
     DISTANCE = 'DISTANCE'
     SEGMENTS = 'SEGMENTS'
     DISSOLVE = 'DISSOLVE'
+    
+    def __init__(self, parent=None):
+        GeoAlgorithm.__init__(self, parent)
 
     def defineCharacteristics(self):
         self.name = 'Fixed distance buffer'

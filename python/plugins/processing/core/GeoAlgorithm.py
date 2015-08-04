@@ -57,9 +57,9 @@ class GeoAlgorithm(QObject):
     setConsoleInfo = pyqtSignal(str)
     cancelAlgorithmExecution = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, parent=None):
         # Call QObject init method
-        QObject.__init__(self, None)
+        QObject.__init__(self, parent)
         
         # Parameters needed by the algorithm
         self.parameters = list()

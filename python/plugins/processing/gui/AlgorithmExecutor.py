@@ -10,7 +10,7 @@ from processing.tools import dataobjects
 from processing.tools.system import getTempFilename
 from processing.tools import vector
 from processing.gui.SilentProgress import SilentProgress
-import time
+import threading
 
 # processing.runalg('qgis:creategrid', 0, "0,1,0,1", 0.1, 0.1, "EPSG:4326", None)
 
@@ -22,11 +22,12 @@ class AlgorithmExecutor(QObject):
     setPercentage = pyqtSignal(int)
     setText = pyqtSignal(str)
 
-    def __init__(self, alg, parent = None):
-        QObject.__init__(self, parent)
+    def __init__(self, alg):
+        QObject.__init__(self, parent=None)
         self.alg = alg
         self.paramToIter = None
 
+    @pyqtSlot()
     def runalg(self):
         """Executes a given algorithm, showing its progress in the
         progress object passed along.
@@ -35,6 +36,8 @@ class AlgorithmExecutor(QObject):
         could not be completed.
         """
         try:
+            thread_id = threading.current_thread()
+            print thread_id
             self.alg.execute()
             self.setResult.emit(True)
         except CancelledAlgorithmExecutionException, e:
