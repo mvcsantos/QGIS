@@ -38,14 +38,15 @@ class AlgorithmExecutor(QObject):
         try:
             thread_id = threading.current_thread()
             print thread_id
+            ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm thread: "+str(thread_id))
             self.alg.execute()
             self.setResult.emit(True)
         except CancelledAlgorithmExecutionException, e:
-            #ProcessingLog.addToLog(ProcessingLog.LOG_INFO, e.msg)
+            ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm Execution Cancelled...")
             self.setResult.emit(False)
             self.alg.executionCancelled = False
         except Exception as e:
-            ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
+            ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, sys.exc_info()[0])
             print e
             self.setResult.emit(False)
 

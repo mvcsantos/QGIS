@@ -34,7 +34,6 @@ from processing.core.outputs import OutputVector
 from processing.algs.qgis.Buffer import Buffer
 from processing.tools import dataobjects
 
-
 class FixedDistanceBuffer(GeoAlgorithm):
 
     INPUT = 'INPUT'
@@ -46,6 +45,7 @@ class FixedDistanceBuffer(GeoAlgorithm):
     
     def __init__(self, parent=None):
         GeoAlgorithm.__init__(self, parent)
+        self.buff = Buffer(parent=self) 
 
     def defineCharacteristics(self):
         self.name = 'Fixed distance buffer'
@@ -71,6 +71,5 @@ class FixedDistanceBuffer(GeoAlgorithm):
             self.OUTPUT).getVectorWriter(layer.pendingFields().toList(),
                 QGis.WKBPolygon, layer.crs())
             
-        buff = Buffer(parent=self) 
-        buff.buffering(writer, distance, None, False, layer,
+        self.buff.buffering(writer, distance, None, False, layer,
                        dissolve, segments)

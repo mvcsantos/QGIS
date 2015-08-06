@@ -108,7 +108,7 @@ class GeoAlgorithm(QObject):
         """Returns a new instance of this algorithm, ready to be used
         for being executed.
         """
-        newone = GeoAlgorithm()
+        newone = GeoAlgorithm(parent=self.parent())
         newone.__class__ = self.__class__
         newone.__dict__ = self.__dict__
         newone.parameters = copy.deepcopy(self.parameters)
