@@ -190,48 +190,37 @@ class AlgorithmDialog(AlgorithmDialogBase):
             self.setInfo(
                 self.tr('<b>Algorithm %s starting...</b>') % self.alg.name)
 
-            if self.iterateParam:
-               self.workerThread.started.connect(self.algExecutor.runalgIterating)
-               try:
-                   self.workerThread.start()
-               except Exception as e:
-                   ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
-               
-            else:
-                command = self.alg.getAsCommand()
-                
-                algorithmExecutorRunnable = AlgorithmExecutorTask(self.alg)
-                
-                # Connecting progress bar signals
-                algorithmExecutorRunnable.algExecutor.alg.progress.connect(self.setPercentage)
-                algorithmExecutorRunnable.algExecutor.alg.setText.connect(self.setText)
-                algorithmExecutorRunnable.algExecutor.alg.setCommand.connect(self.setCommand)
-                algorithmExecutorRunnable.algExecutor.alg.setConsoleInfo.connect(self.setConsoleInfo)
-                algorithmExecutorRunnable.algExecutor.alg.setInfo.connect(self.setInfo)
-                algorithmExecutorRunnable.algExecutor.setText.connect(self.setText)
-                algorithmExecutorRunnable.algExecutor.setPercentage.connect(self.setPercentage)
-                
-                # Button to quit the thread
-                self.btnCancel.clicked.connect(algorithmExecutorRunnable.algExecutor.alg.cancelAlgorithmExecution)
-                
-                # When the algorithm is finished the postProcess is called  
-                # to close the dialog and release the thread
-                algorithmExecutorRunnable.algExecutor.setResult.connect(self.postProcess)
-                
-                if command:
-                    ProcessingLog.addToLog(
-                        ProcessingLog.LOG_ALGORITHM, command)
-                try:
-                    thread_id = threading.current_thread()
-                    ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Main thread: "+str(thread_id))
-                    active_threads = QThreadPool.globalInstance().activeThreadCount()
-                    max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
-                    ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Active threads: "+str(active_threads))
-                    QThreadPool.globalInstance().reserveThread()
-                    QThreadPool.globalInstance().start(algorithmExecutorRunnable)
-                except Exception as e:
-                    ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, sys.exc_info()[0])
-                
+            
+            algorithmExecutorRunnable = AlgorithmExecutorTask(self.alg, self.iterateParam)
+            
+            # Connecting progress bar signals
+            algorithmExecutorRunnable.algExecutor.alg.progress.connect(self.setPercentage)
+            algorithmExecutorRunnable.algExecutor.alg.setText.connect(self.setText)
+            algorithmExecutorRunnable.algExecutor.alg.setCommand.connect(self.setCommand)
+            algorithmExecutorRunnable.algExecutor.alg.setConsoleInfo.connect(self.setConsoleInfo)
+            algorithmExecutorRunnable.algExecutor.alg.setInfo.connect(self.setInfo)
+            algorithmExecutorRunnable.algExecutor.setText.connect(self.setText)
+            algorithmExecutorRunnable.algExecutor.setPercentage.connect(self.setPercentage)
+            
+            # Button to quit the thread
+            self.btnCancel.clicked.connect(algorithmExecutorRunnable.algExecutor.alg.cancelAlgorithmExecution)
+            
+            # When the algorithm is finished the postProcess is called  
+            # to close the dialog and release the thread
+            algorithmExecutorRunnable.algExecutor.setResult.connect(self.postProcess)
+            
+            ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Qt Interface thread: "+str(threading.current_thread()))
+            active_threads = QThreadPool.globalInstance().activeThreadCount()
+            #max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
+            ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Active threads: "+str(active_threads))
+            
+            try:
+                # Reserve and run the algorithm in a separate thread
+                QThreadPool.globalInstance().reserveThread()
+                QThreadPool.globalInstance().start(algorithmExecutorRunnable)
+            except Exception as e:
+                ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, sys.exc_info()[0])
+                QThreadPool.globalInstance().reserveThread()
                 
         except AlgorithmDialogBase.InvalidParameterValue, e:
             try:
@@ -242,11 +231,12 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 e.widget.setPalette(palette)
                 self.lblProgress.setText(
                     self.tr('<b>Missing parameter value: %s</b>') % e.parameter.description)
-                return
             except:
                 QMessageBox.critical(self,
                     self.tr('Unable to execute algorithm'),
                     self.tr('Wrong or missing parameter values'))
+                
+        
 
 
     def finish(self):
