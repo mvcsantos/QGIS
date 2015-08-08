@@ -210,14 +210,17 @@ class AlgorithmDialog(AlgorithmDialogBase):
             algorithmExecutorRunnable.algExecutor.setResult.connect(self.postProcess)
             
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Qt Interface thread: "+str(threading.current_thread()))
-            active_threads = QThreadPool.globalInstance().activeThreadCount()
-            #max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
-            ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Active threads: "+str(active_threads))
             
             try:
                 # Reserve and run the algorithm in a separate thread
                 QThreadPool.globalInstance().reserveThread()
                 QThreadPool.globalInstance().start(algorithmExecutorRunnable)
+                
+                active_threads = QThreadPool.globalInstance().activeThreadCount()
+                max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
+                ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Max thread count: "+str(max_thread_count))
+                ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Active threads: "+str(active_threads))
+                
             except Exception as e:
                 ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, sys.exc_info()[0])
                 QThreadPool.globalInstance().reserveThread()
