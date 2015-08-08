@@ -212,12 +212,24 @@ class AlgorithmDialog(AlgorithmDialogBase):
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Qt Interface thread: "+str(threading.current_thread()))
             
             try:
-                # Reserve and run the algorithm in a separate thread
-                QThreadPool.globalInstance().reserveThread()
-                QThreadPool.globalInstance().start(algorithmExecutorRunnable)
+                active_threads = QThreadPool.globalInstance().activeThreadCount()
+                max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
+                
+                if active_threads < max_thread_count:
+                    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Threads available")
+                    # Reserve and run the algorithm in a separate thread
+                    #QThreadPool.globalInstance().reserveThread()
+                    QThreadPool.globalInstance().start(algorithmExecutorRunnable)
+                else:
+                    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "No threads available")
+                    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Increasing max thread count")
+                    QThreadPool.globalInstance().setMaxThreadCount(max_thread_count+1)
+                    #QThreadPool.globalInstance().reserveThread()
+                    QThreadPool.globalInstance().start(algorithmExecutorRunnable)
                 
                 active_threads = QThreadPool.globalInstance().activeThreadCount()
                 max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
+                
                 ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Max thread count: "+str(max_thread_count))
                 ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Active threads: "+str(active_threads))
                 
@@ -237,8 +249,7 @@ class AlgorithmDialog(AlgorithmDialogBase):
             except:
                 QMessageBox.critical(self,
                     self.tr('Unable to execute algorithm'),
-                    self.tr('Wrong or missing parameter values'))
-                
+                    self.tr('Wrong or missing parameter values'))        
         
 
 
@@ -270,6 +281,7 @@ class AlgorithmDialog(AlgorithmDialogBase):
         else:
             QApplication.restoreOverrideCursor()
             self.resetGUI()
-        QThreadPool.globalInstance().releaseThread()
+        #QThreadPool.globalInstance().releaseThread()
+        #QThreadPool.globalInstance().setMaxThreadCount(QThreadPool.globalInstance().maxThreadCount()-1)
         
         
