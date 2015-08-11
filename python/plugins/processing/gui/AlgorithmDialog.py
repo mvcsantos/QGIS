@@ -215,17 +215,20 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 active_threads = QThreadPool.globalInstance().activeThreadCount()
                 max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
                 
-                if active_threads < max_thread_count:
-                    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Threads available")
+                if QThreadPool.globalInstance().tryStart(algorithmExecutorRunnable):
+                    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Thread algorithm started")
                     # Reserve and run the algorithm in a separate thread
                     #QThreadPool.globalInstance().reserveThread()
-                    QThreadPool.globalInstance().start(algorithmExecutorRunnable)
+                    #QThreadPool.globalInstance().start(algorithmExecutorRunnable)
                 else:
-                    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "No threads available")
+                    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Thread algorithm failed to start")
                     ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Increasing max thread count")
                     QThreadPool.globalInstance().setMaxThreadCount(max_thread_count+1)
                     #QThreadPool.globalInstance().reserveThread()
-                    QThreadPool.globalInstance().start(algorithmExecutorRunnable)
+                    if QThreadPool.globalInstance().tryStart(algorithmExecutorRunnable):
+                        ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Thread algorithm started")
+                    else: 
+                        ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Thread algorithm failed to start")
                 
                 active_threads = QThreadPool.globalInstance().activeThreadCount()
                 max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
@@ -235,7 +238,7 @@ class AlgorithmDialog(AlgorithmDialogBase):
                 
             except Exception as e:
                 ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, sys.exc_info()[0])
-                QThreadPool.globalInstance().reserveThread()
+                #QThreadPool.globalInstance().reserveThread()
                 
         except AlgorithmDialogBase.InvalidParameterValue, e:
             try:
