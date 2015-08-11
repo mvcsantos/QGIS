@@ -86,7 +86,7 @@ class GdalUtils(QObject):
             stderr=subprocess.STDOUT,
             universal_newlines=True,
             preexec_fn=os.setsid
-        ).stdout
+        )
         self.parent().setInfo.emit('GDAL command output:')
         
         # set the O_NONBLOCK flag of proc.stdout file descriptor:
