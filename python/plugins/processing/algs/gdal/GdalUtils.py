@@ -28,9 +28,7 @@ __revision__ = '$Format:%H$'
 import os
 import subprocess
 import platform
-import signal
 
-from fcntl import fcntl, F_GETFL, F_SETFL
 from PyQt4.QtCore import QSettings, QObject
 from qgis.core import QgsApplication
 from processing.core.ProcessingLog import ProcessingLog
@@ -85,37 +83,30 @@ class GdalUtils(QObject):
             stdin=open(os.devnull),
             stderr=subprocess.STDOUT,
             universal_newlines=True,
-            preexec_fn=os.setsid
         )
         self.parent().setInfo.emit('GDAL command output:')
-        
-        # set the O_NONBLOCK flag of proc.stdout file descriptor:
-        flags = fcntl(proc.stdout, F_GETFL) # get current proc.stdout flags
-        fcntl(proc.stdout, F_SETFL, flags | os.O_NONBLOCK)
-        
-        output = None
-        
         while True:
             try:
-                output = os.read(proc.stdout.fileno(), 1024),
-                break
-            except OSError:
-                # the os throws an exception if there is no data
+                # poll() returns 0(zero) when the process finish
+                terminated = proc.poll()
+                if terminated == 0:
+                    break
                 if self.parent().executionCancelled:
-                    self.parent().executionCancelled = False
-                    os.killpg(proc.pid, signal.SIGTERM)
+                    proc.terminate()
                     self.parent().setInfo.emit('GRASS execution cancelled')
+                    raise CancelledAlgorithmExecutionException() 
+            except Exception:
+                if self.parent().executionCancelled:
+                    proc.terminate()
+                    self.parent().setInfo.emit('GRASS execution cancelled (Exception)')
                     raise CancelledAlgorithmExecutionException()
                 
-        
-        output = output[0].splitlines()
-        
-        for line in output:
+        for line in iter(proc.stdout.readline, ''):
             self.parent().setConsoleInfo.emit(line)
-            loglines.append(line)
+            loglines.append(line)               
         ProcessingLog.addToLog(ProcessingLog.LOG_INFO, loglines)
         GdalUtils.consoleOutput = loglines
-
+    
     @staticmethod
     def getConsoleOutput():
         return GdalUtils.consoleOutput
