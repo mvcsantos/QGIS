@@ -30,7 +30,6 @@ import shutil
 import codecs
 import subprocess
 import os
-import signal
 
 from qgis.core import QgsApplication
 from PyQt4.QtCore import QCoreApplication, QObject
@@ -39,7 +38,6 @@ from processing.core.ProcessingLog import ProcessingLog
 from processing.core.CancelledAlgorithmExecutionException import CancelledAlgorithmExecutionException
 from processing.tools.system import userFolder, isMac, isWindows, mkdir, tempFolder
 from processing.tests.TestData import points
-from fcntl import fcntl, F_GETFL, F_SETFL
 
 
 class GrassUtils(QObject):
@@ -280,33 +278,26 @@ class GrassUtils(QObject):
             stdin=open(os.devnull),
             stderr=subprocess.STDOUT,
             universal_newlines=True,
-            preexec_fn=os.setsid
         )
         
         self.parent().setInfo.emit('GRASS commands output:')
-        
-        # set the O_NONBLOCK flag of proc.stdout file descriptor:
-        flags = fcntl(proc.stdout, F_GETFL) # get current proc.stdout flags
-        fcntl(proc.stdout, F_SETFL, flags | os.O_NONBLOCK)
-        
-        output = None
-        
         while True:
             try:
-                output = os.read(proc.stdout.fileno(), 1024),
-                break
-            except OSError:
-                # the os throws an exception if there is no data
+                # poll() returns 0(zero) when the process finish
+                terminated = proc.poll()
+                if terminated == 0:
+                    break
                 if self.parent().executionCancelled:
-                    self.parent().executionCancelled = False
-                    os.killpg(proc.pid, signal.SIGTERM)
+                    proc.terminate()
                     self.parent().setInfo.emit('GRASS execution cancelled')
+                    raise CancelledAlgorithmExecutionException() 
+            except Exception:
+                if self.parent().executionCancelled:
+                    proc.terminate()
+                    self.parent().setInfo.emit('GRASS execution cancelled (Exception)')
                     raise CancelledAlgorithmExecutionException()
-                
         
-        output = output[0].splitlines()
-        
-        for line in output:
+        for line in iter(proc.stdout.readline, ''):
             if 'GRASS_INFO_PERCENT' in line:
                 try:
                     self.parent().progress.emit(int(line[len('GRASS_INFO_PERCENT')

@@ -93,12 +93,12 @@ class GdalUtils(QObject):
                     break
                 if self.parent().executionCancelled:
                     proc.terminate()
-                    self.parent().setInfo.emit('GRASS execution cancelled')
+                    self.parent().setInfo.emit('GDAL execution cancelled')
                     raise CancelledAlgorithmExecutionException() 
             except Exception:
                 if self.parent().executionCancelled:
                     proc.terminate()
-                    self.parent().setInfo.emit('GRASS execution cancelled (Exception)')
+                    self.parent().setInfo.emit('GDAL execution cancelled (Exception)')
                     raise CancelledAlgorithmExecutionException()
                 
         for line in iter(proc.stdout.readline, ''):
