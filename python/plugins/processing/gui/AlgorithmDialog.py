@@ -25,7 +25,7 @@ __copyright__ = '(C) 2012, Victor Olaya'
 
 __revision__ = '$Format:%H$'
 
-from PyQt4.QtCore import Qt, QThread, QThreadPool, pyqtSlot
+from PyQt4.QtCore import Qt, QThreadPool, pyqtSlot
 from PyQt4.QtGui import QMessageBox, QApplication, QCursor, QColor, QPalette
 
 from processing.core.ProcessingLog import ProcessingLog

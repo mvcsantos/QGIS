@@ -27,7 +27,7 @@ __revision__ = '$Format:%H$'
 
 import sys
 
-from PyQt4.QtCore import Qt, QCoreApplication, QThread, QObject, pyqtSlot, pyqtSignal 
+from PyQt4.QtCore import Qt, QCoreApplication, QThreadPool, QObject, pyqtSlot, pyqtSignal 
 from PyQt4.QtGui import QApplication, QCursor
 
 from qgis.utils import iface
@@ -38,6 +38,7 @@ from processing.modeler.ModelerUtils import ModelerUtils
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.GeoAlgorithm import GeoAlgorithm
 from processing.core.ProcessingLog import ProcessingLog
+from processing.core.AlgorithmExecutorTask import AlgorithmExecutorTask
 from processing.gui.MessageBarProgress import MessageBarProgress
 from processing.gui.RenderingStyles import RenderingStyles
 from processing.gui.Postprocessing import handleAlgorithmResults
@@ -55,8 +56,8 @@ from processing.algs.saga.SagaAlgorithmProvider import SagaAlgorithmProvider
 from processing.script.ScriptAlgorithmProvider import ScriptAlgorithmProvider
 from processing.algs.taudem.TauDEMAlgorithmProvider import TauDEMAlgorithmProvider
 from processing.tools import dataobjects
-import time
-from multiprocessing import Pool
+
+import threading
 
 class Processing(QObject):
 
@@ -366,30 +367,38 @@ class Processing(QObject):
         if iface is not None :
             self.progress = MessageBarProgress()
 
-        # ----------------------------------
         self.onFinish = onFinish
         if self.progress is None:
             self.progress = SilentProgress()
-            
-        self.alg.progress.connect(self.progress.setPercentage)
-        self.alg.setText.connect(self.progress.setText)
-        self.alg.setCommand.connect(self.progress.setCommand)
-        self.alg.setConsoleInfo.connect(self.progress.setConsoleInfo)
-        self.alg.setInfo.connect(self.progress.setInfo)
         
-        self.workerThread = QThread()
-        self.workerThread.setTerminationEnabled(True)
+        algorithmExecutorRunnable = AlgorithmExecutorTask(self.alg, iterateParam = False)
         
-        self.algExecutor = AlgorithmExecutor(self.alg)
-        self.workerThread.started.connect(self.algExecutor.runalg)
+        # Connecting progress bar and dialog signals
+        algorithmExecutorRunnable.algExecutor.alg.progress.connect(self.progress.setPercentage)
+        algorithmExecutorRunnable.algExecutor.alg.setText.connect(self.progress.setText)
+        algorithmExecutorRunnable.algExecutor.alg.setCommand.connect(self.progress.setCommand)
+        algorithmExecutorRunnable.algExecutor.alg.setConsoleInfo.connect(self.progress.setConsoleInfo)
+        algorithmExecutorRunnable.algExecutor.alg.setInfo.connect(self.progress.setInfo)
         
-        self.algExecutor.setResult.connect(self.postProcess)
-        self.algExecutor.setResult.connect(self.algExecutor.finished)
-        self.algExecutor.finished.connect(self.workerThread.quit)
-        self.algExecutor.moveToThread(self.workerThread)
+        # slot to handle the result
+        algorithmExecutorRunnable.algExecutor.setResult.connect(self.postProcess)
+        
+        ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Qt Interface thread: "+str(threading.current_thread()))
         
         try:
-            self.workerThread.start()
+            active_threads = QThreadPool.globalInstance().activeThreadCount()
+            max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
+             
+            if QThreadPool.globalInstance().tryStart(algorithmExecutorRunnable):
+                ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm's thread started")
+            else:
+                ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm's thread failed to start")
+                ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Increasing max thread count")
+                if QThreadPool.globalInstance().tryStart(algorithmExecutorRunnable):
+                    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm's thread started")
+                else:
+                    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm's thread failed to start")
+                
         except Exception as e:
             ProcessingLog.addToLog(sys.exc_info()[0], ProcessingLog.LOG_ERROR)
             print e
