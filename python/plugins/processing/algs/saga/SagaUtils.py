@@ -33,6 +33,7 @@ from PyQt4.QtCore import QCoreApplication, QObject
 from qgis.core import QgsApplication
 from processing.core.ProcessingConfig import ProcessingConfig
 from processing.core.ProcessingLog import ProcessingLog
+from processing.core.CancelledAlgorithmExecutionException import CancelledAlgorithmExecutionException
 from processing.tools.system import isWindows, isMac, userFolder
 
 
@@ -151,9 +152,25 @@ class SagaUtils(QObject):
             stdin=open(os.devnull),
             stderr=subprocess.STDOUT,
             universal_newlines=True,
-        ).stdout
+        )
+        while True:
+            try:
+                # poll() returns 0(zero) when the process finish
+                terminated = proc.poll()
+                if terminated == 0:
+                    break
+                if self.parent().executionCancelled:
+                    proc.terminate()
+                    self.parent().setInfo.emit('SAGA execution cancelled')
+                    raise CancelledAlgorithmExecutionException() 
+            except Exception:
+                if self.parent().executionCancelled:
+                    proc.terminate()
+                    self.parent().setInfo.emit('SAGA execution cancelled (Exception)')
+                    raise CancelledAlgorithmExecutionException()
+                
         try:
-            for line in iter(proc.readline, ''):
+            for line in iter(proc.stdout.readline, ''):
                 if '%' in line:
                     s = ''.join([x for x in line if x.isdigit()])
                     try:
