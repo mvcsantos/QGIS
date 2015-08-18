@@ -4,7 +4,6 @@ from qgis.core import QgsFeature, QgsVectorFileWriter
 from PyQt4.QtCore import QSettings, QCoreApplication, QObject, pyqtSlot, pyqtSignal
 from processing.core.ProcessingLog import ProcessingLog
 from processing.core.GeoAlgorithmExecutionException import GeoAlgorithmExecutionException
-from processing.core.CancelledAlgorithmExecutionException import CancelledAlgorithmExecutionException
 from processing.gui.Postprocessing import handleAlgorithmResults
 from processing.tools import dataobjects
 from processing.tools.system import getTempFilename
@@ -22,12 +21,11 @@ class AlgorithmExecutor(QObject):
     setPercentage = pyqtSignal(int)
     setText = pyqtSignal(str)
 
-    def __init__(self, alg):
+    def __init__(self, alg, paramToIter=None):
         QObject.__init__(self, parent=None)
         self.alg = alg
-        self.paramToIter = None
+        self.paramToIter = paramToIter
 
-    @pyqtSlot()
     def runalg(self):
         """Executes a given algorithm, showing its progress in the
         progress object passed along.
@@ -35,20 +33,11 @@ class AlgorithmExecutor(QObject):
         Return true if everything went OK, false if the algorithm
         could not be completed.
         """
-        try:
-            thread_id = threading.current_thread()
-            print thread_id
-            ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm thread: "+str(thread_id))
-            self.alg.execute()
-            self.setResult.emit(True)
-        except CancelledAlgorithmExecutionException, e:
-            ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm Execution Cancelled...")
-            self.setResult.emit(False)
-            self.alg.executionCancelled = False
-        except Exception as e:
-            ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, sys.exc_info()[0])
-            print e
-            self.setResult.emit(False)
+        thread_id = threading.current_thread()
+        print thread_id
+        ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm thread: "+str(thread_id))
+        self.alg.execute()
+        self.setResult.emit(True)
 
     def runalgIterating(self):
          # Generate all single-feature layers
@@ -85,7 +74,8 @@ class AlgorithmExecutor(QObject):
             self.setText.emit(self.tr('Executing iteration %s/%s...' % (str(i), str(len(filelist)))))
             self.setPercentage.emit(i * 100 / len(filelist))
             # TODO: figure out how to solve this problem
-            # because the runalg doesn't return anything 
+            # because the runalg doesn't return anything
+            # Handle the result from the main thread (create a signal for that) 
             if self.runalg():
                 handleAlgorithmResults(self.alg, None, False)
             else:

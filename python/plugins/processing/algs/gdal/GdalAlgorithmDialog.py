@@ -1,8 +1,10 @@
 
 from PyQt4.QtGui import *
+from PyQt4.QtCore import Qt
 from processing.gui.AlgorithmDialog import AlgorithmDialog
 from processing.gui.AlgorithmDialogBase import AlgorithmDialogBase
 from processing.gui.ParametersPanel import ParametersPanel
+from processing.gui.AlgorithmExecutor import AlgorithmExecutor
 
 class GdalAlgorithmDialog(AlgorithmDialog):
 
@@ -10,7 +12,23 @@ class GdalAlgorithmDialog(AlgorithmDialog):
         AlgorithmDialogBase.__init__(self, alg)
 
         self.alg = alg
-
+        self.algExecutor = AlgorithmExecutor(self.alg)
+         # Connecting progress bar signals
+        self.algExecutor.alg.progress.connect(self.setPercentage)
+        self.algExecutor.alg.setText.connect(self.setText)
+        self.algExecutor.alg.setCommand.connect(self.setCommand)
+        self.algExecutor.alg.setConsoleInfo.connect(self.setConsoleInfo)
+        self.algExecutor.alg.setInfo.connect(self.setInfo)
+        self.algExecutor.setText.connect(self.setText)
+        self.algExecutor.setPercentage.connect(self.setPercentage)
+        
+        # When the algorithm is finished the postProcess is called  
+        # to close the dialog and release the thread
+        self.algExecutor.setResult.connect(self.postProcess)
+        
+        # Button to quit the thread
+        self.btnCancel.clicked.connect(self.algExecutor.alg.cancelAlgorithmExecution)
+        
         self.mainWidget = GdalParametersPanel(self, alg)
         self.setMainWidget()
         self.mainWidget.parametersHaveChanged()
