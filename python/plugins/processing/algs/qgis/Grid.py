@@ -182,12 +182,18 @@ class Grid(GeoAlgorithm):
         rows = int(math.floor(float(height) / vSpacing))
 
         for col in xrange(0, columns):
+            if self.executionCancelled:
+                self.executionCancelled = False
+                raise CancelledAlgorithmExecutionException()
             # (column + 1) and (row + 1) calculation is used to maintain
             # topology between adjacent shapes and avoid overlaps/holes
             # due to rounding errors
             x1 = originX + (col * hSpacing)
             x2 = originX + ((col + 1) * hSpacing)
             for row in xrange(0, rows):
+                if self.executionCancelled:
+                    self.executionCancelled = False
+                    raise CancelledAlgorithmExecutionException()
                 y1 = originY + (row * vSpacing)
                 y2 = originY + ((row + 1) * vSpacing)
 
@@ -218,6 +224,9 @@ class Grid(GeoAlgorithm):
             x3 = originX + ((col + 2) * halfHSpacing)
 
             for row in xrange(0, rows):
+                if self.executionCancelled:
+                    self.executionCancelled = False
+                    raise CancelledAlgorithmExecutionException()
                 if (col % 2) == 0:
                     y1 = originY + (((row * 2) + 0) * halfVSpacing)
                     y2 = originY + (((row * 2) + 1) * halfVSpacing)
@@ -262,6 +271,9 @@ class Grid(GeoAlgorithm):
             x4 = x3 + (xVertexHi - xVertexLo)       # far right
 
             for row in xrange(0, rows):
+                if self.executionCancelled:
+                    self.executionCancelled = False
+                    raise CancelledAlgorithmExecutionException()
                 if (col % 2) == 0:
                     y1 = originY + (((row * 2) + 0) * halfVSpacing) # hi
                     y2 = originY + (((row * 2) + 1) * halfVSpacing) # mid

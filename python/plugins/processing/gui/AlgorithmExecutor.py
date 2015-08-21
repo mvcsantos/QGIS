@@ -34,8 +34,7 @@ class AlgorithmExecutor(QObject):
         could not be completed.
         """
         thread_id = threading.current_thread()
-        print thread_id
-        ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm thread: "+str(thread_id))
+        ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm's thread: "+str(thread_id))
         self.alg.execute()
         self.setResult.emit(True)
 
@@ -80,6 +79,7 @@ class AlgorithmExecutor(QObject):
                 handleAlgorithmResults(self.alg, None, False)
             else:
                 self.setResult.emit(False)
+                return 
     
         self.setResult.emit(True)
         

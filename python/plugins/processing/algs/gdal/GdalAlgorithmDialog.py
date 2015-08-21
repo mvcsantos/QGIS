@@ -8,11 +8,12 @@ from processing.gui.AlgorithmExecutor import AlgorithmExecutor
 
 class GdalAlgorithmDialog(AlgorithmDialog):
 
-    def __init__(self, alg):
+    def __init__(self, alg, threadPool):
         AlgorithmDialogBase.__init__(self, alg)
 
         self.alg = alg
         self.algExecutor = AlgorithmExecutor(self.alg)
+        self.threadPool = threadPool
          # Connecting progress bar signals
         self.algExecutor.alg.progress.connect(self.setPercentage)
         self.algExecutor.alg.setText.connect(self.setText)

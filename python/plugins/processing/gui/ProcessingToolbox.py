@@ -28,7 +28,7 @@ __revision__ = '$Format:%H$'
 import os
 
 from PyQt4 import uic
-from PyQt4.QtCore import Qt, QSettings, QCoreApplication
+from PyQt4.QtCore import Qt, QSettings, QCoreApplication, QThreadPool
 from PyQt4.QtGui import QMenu, QAction, QTreeWidgetItem
 from qgis.utils import iface
 
@@ -77,6 +77,11 @@ class ProcessingToolbox(BASE, WIDGET):
 
         if hasattr(self.searchBox, 'setPlaceholderText'):
             self.searchBox.setPlaceholderText(self.tr('Search...'))
+            
+        # Dedicated threadPool to run the algorithms 
+        self.threadPool = QThreadPool()
+        self.threadPool.expiryTimeout()
+        self.threadPool.setExpiryTimeout(30*1000)
 
         self.fillTree()
 
@@ -199,9 +204,9 @@ class ProcessingToolbox(BASE, WIDGET):
                 dlg.exec_()
                 return
             alg = alg.getCopy()
-            dlg = alg.getCustomParametersDialog()
+            dlg = alg.getCustomParametersDialog(self.threadPool)
             if not dlg:
-                dlg = AlgorithmDialog(alg)
+                dlg = AlgorithmDialog(alg, self.threadPool)
             canvas = iface.mapCanvas()
             prevMapTool = canvas.mapTool()
             dlg.show()

@@ -178,7 +178,7 @@ class GeoAlgorithm(QObject):
         """
         pass
 
-    def getCustomParametersDialog(self):
+    def getCustomParametersDialog(self, threadPool):
         """If the algorithm has a custom parameters dialog, it should
         be returned here, ready to be executed.
         """

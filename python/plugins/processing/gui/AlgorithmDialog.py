@@ -64,11 +64,12 @@ import threading
 
 class AlgorithmDialog(AlgorithmDialogBase):
 
-    def __init__(self, alg):
+    def __init__(self, alg, threadPool):
         AlgorithmDialogBase.__init__(self, alg)
 
         self.alg = alg
         self.algExecutor = AlgorithmExecutor(self.alg)
+        self.threadPool = threadPool
         
         # Connecting progress bar signals
         self.algExecutor.alg.progress.connect(self.setPercentage)
@@ -163,7 +164,6 @@ class AlgorithmDialog(AlgorithmDialogBase):
             return param.setValue(unicode(widget.text()))
 
     def accept(self):
-        print self
         checkCRS = ProcessingConfig.getSetting(ProcessingConfig.WARN_UNMATCHING_CRS)
         try:
             self.setParamValues()
@@ -211,22 +211,15 @@ class AlgorithmDialog(AlgorithmDialogBase):
             
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Qt Interface thread: "+str(threading.current_thread()))
             
-            active_threads = QThreadPool.globalInstance().activeThreadCount()
-            max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
+            active_threads = self.threadPool.activeThreadCount()
+            max_thread_count =  self.threadPool.maxThreadCount()
             
-            if QThreadPool.globalInstance().tryStart(algorithmExecutorRunnable):
-                ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Thread algorithm started")
-            else:
-                ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Thread algorithm failed to start")
-                ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Increasing max thread count")
-                QThreadPool.globalInstance().setMaxThreadCount(max_thread_count+1)
-                if QThreadPool.globalInstance().tryStart(algorithmExecutorRunnable):
-                    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Thread algorithm started")
-                else: 
-                    ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Thread algorithm failed to start")
+            if not self.threadPool.tryStart(algorithmExecutorRunnable):
+                ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm's thread failed to start")
+                raise Exception("Algorithm's thread failed to start")
             
-            active_threads = QThreadPool.globalInstance().activeThreadCount()
-            max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
+            active_threads = self.threadPool.activeThreadCount()
+            max_thread_count =  self.threadPool.maxThreadCount()
             
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Max thread count: "+str(max_thread_count))
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, "Active threads: "+str(active_threads))
@@ -246,7 +239,6 @@ class AlgorithmDialog(AlgorithmDialogBase):
                     self.tr('Unable to execute algorithm'),
                     self.tr('Wrong or missing parameter values'))        
         except Exception as e:
-            print e
             ProcessingLog.addToLog(ProcessingLog.LOG_ERROR, e)
             QApplication.restoreOverrideCursor()
             self.resetGUI()
@@ -274,8 +266,6 @@ class AlgorithmDialog(AlgorithmDialogBase):
            
     @pyqtSlot(bool)     
     def postProcess(self, algResult):
-        print "postProcess (ALGORITHMDIALOG)"
-        print "postProcess thread: "+str(threading.current_thread())
         if algResult:
             self.setInfo(self.tr('<b>Algorithm\'s thread finished!</b>'))
             self.finish()

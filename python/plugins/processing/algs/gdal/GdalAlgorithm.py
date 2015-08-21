@@ -46,8 +46,8 @@ class GdalAlgorithm(GeoAlgorithm):
     def getIcon(self):
         return QIcon(os.path.join(pluginPath, 'images', 'gdal.png'))
 
-    def getCustomParametersDialog(self):
-        return GdalAlgorithmDialog(self)
+    def getCustomParametersDialog(self, threadPool):
+        return GdalAlgorithmDialog(self, threadPool)
 
     def processAlgorithm(self):
         self.gdalUtils.runGdal(self.getConsoleCommands())
