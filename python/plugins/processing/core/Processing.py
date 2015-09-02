@@ -370,8 +370,9 @@ class Processing(QObject):
         self.onFinish = onFinish
         if self.progress is None:
             self.progress = SilentProgress()
-        
-        algorithmExecutorRunnable = AlgorithmExecutorTask(self.alg, iterateParam = False)
+            
+        algExecutor = AlgorithmExecutor(self.alg, paramToIter=False)
+        algorithmExecutorRunnable = AlgorithmExecutorTask(algExecutor)
         
         # Connecting progress bar and dialog signals
         algorithmExecutorRunnable.algExecutor.alg.progress.connect(self.progress.setPercentage)
