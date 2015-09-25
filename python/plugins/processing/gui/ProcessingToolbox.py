@@ -43,6 +43,8 @@ from processing.gui.AlgorithmDialog import AlgorithmDialog
 from processing.gui.BatchAlgorithmDialog import BatchAlgorithmDialog
 from processing.gui.EditRenderingStylesDialog import EditRenderingStylesDialog
 
+from processing.tools import general 
+
 pluginPath = os.path.split(os.path.dirname(__file__))[0]
 WIDGET, BASE = uic.loadUiType(
     os.path.join(pluginPath, 'ui', 'ProcessingToolbox.ui'))
@@ -77,11 +79,6 @@ class ProcessingToolbox(BASE, WIDGET):
 
         if hasattr(self.searchBox, 'setPlaceholderText'):
             self.searchBox.setPlaceholderText(self.tr('Search...'))
-            
-        # Dedicated threadPool to run the algorithms 
-        self.threadPool = QThreadPool()
-        self.threadPool.expiryTimeout()
-        self.threadPool.setExpiryTimeout(30*1000)
 
         self.fillTree()
 
@@ -204,9 +201,9 @@ class ProcessingToolbox(BASE, WIDGET):
                 dlg.exec_()
                 return
             alg = alg.getCopy()
-            dlg = alg.getCustomParametersDialog(self.threadPool)
+            dlg = alg.getCustomParametersDialog(general.getThreadPool())
             if not dlg:
-                dlg = AlgorithmDialog(alg, self.threadPool)
+                dlg = AlgorithmDialog(alg, general.getThreadPool())
             canvas = iface.mapCanvas()
             prevMapTool = canvas.mapTool()
             dlg.show()

@@ -81,10 +81,11 @@ class Processing(QObject):
     
     setAlgorithmResult = pyqtSignal(dict)
     
-    def __init__(self):
+    def __init__(self, threadPool):
         QObject.__init__(self, None)
         self.alg = None
         self.progress = None
+        self.threadPool = threadPool
 
     @staticmethod
     def addProvider(provider, updateList=True):
@@ -387,15 +388,15 @@ class Processing(QObject):
         ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Qt Interface thread: "+str(threading.current_thread()))
         
         try:
-            active_threads = QThreadPool.globalInstance().activeThreadCount()
-            max_thread_count =  QThreadPool.globalInstance().maxThreadCount()
+            active_threads = self.threadPool.activeThreadCount()
+            max_thread_count =  self.threadPool.maxThreadCount()
              
-            if QThreadPool.globalInstance().tryStart(algorithmExecutorRunnable):
+            if self.threadPool.tryStart(algorithmExecutorRunnable):
                 ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm's thread started")
             else:
                 ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm's thread failed to start")
                 ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Increasing max thread count")
-                if QThreadPool.globalInstance().tryStart(algorithmExecutorRunnable):
+                if self.threadPool.tryStart(algorithmExecutorRunnable):
                     ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm's thread started")
                 else:
                     ProcessingLog.addToLog(ProcessingLog.LOG_INFO, "Algorithm's thread failed to start")

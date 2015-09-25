@@ -28,11 +28,15 @@ __revision__ = '$Format:%H$'
 from processing.core.Processing import Processing
 from processing.gui.Postprocessing import handleAlgorithmResults
 from processing.core.parameters import ParameterSelection
+from PyQt4.QtCore import QThreadPool
+
+# Dedicated threadPool to run the algorithms 
+processingThreadPool = QThreadPool()
+processingThreadPool.expiryTimeout()
+processingThreadPool.setExpiryTimeout(30*1000)
 
 algResults = {}
-processing = Processing()
-
-
+processing = Processing(processingThreadPool)
 
 def alglist(text=None):
     s = ''
@@ -74,7 +78,7 @@ def alghelp(name):
 
 def runalg(algOrName, *args):
     global processing
-    processing = Processing()
+    processing = Processing(processingThreadPool)
     processing.setAlgorithmResult.connect(storeAlgResult)
     processing.runAlgorithm(algOrName, None, *args)
     #if alg is not None:
@@ -83,7 +87,7 @@ def runalg(algOrName, *args):
 
 def runandload(name, *args):
     global processing
-    processing = Processing()
+    processing = Processing(processingThreadPool)
     processing.setAlgorithmResult.connect(storeAlgResult)
     processing.runAlgorithm(name, handleAlgorithmResults, *args)
 
@@ -92,4 +96,7 @@ def storeAlgResult(result):
     global algResults
     algResults.update({'OUTPUT'+str(len(algResults)):result.values()[0]})
     print result
+    
+def getThreadPool():
+    return processingThreadPool
     
